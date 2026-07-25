@@ -1,0 +1,81 @@
+# Batch 0 v0.2 Manifest
+
+Files excluding this manifest: 73
+
+| Path | SHA-256 | Bytes |
+|---|---|---:|
+| `CHANGELOG.md` | `6bb7a39a571c3e9e9f486684ab9accd57a8727196eba236849016f89ade5edd1` | 1409 |
+| `README.md` | `5a27bb03cdbc31c428728caea4b43b2684565eec8ea6f1d45cc1ddf4e57a709e` | 3483 |
+| `VERSION.md` | `16c48f0b12aaa99da63a8bd8114471a5248731f8cbcbf794a353671feed4a6d4` | 515 |
+| `docs/00-project-charter.md` | `cdf2e0d335b9b9a26a8c5c00d3f33806e94e80294454e5a52873eb8b670eb8fc` | 2723 |
+| `docs/adr/ADR-001-initial-deployment-structure.md` | `8d363969e6b08f992fb52ea651249b40403f1aa6140e359b32168ce93ea446c3` | 1128 |
+| `docs/adr/ADR-002-postgresql-authoritative-storage.md` | `9cd1556dd9377bc40d770837807254b93c896552aeac7dad0f86db5c9f694e0f` | 1074 |
+| `docs/adr/ADR-003-integer-minor-unit-money.md` | `dbe8d8973899318280381c916ebc87e887b66d2bb0055662e7f14daf0993eb2d` | 1010 |
+| `docs/adr/ADR-004-immutable-double-entry-ledger.md` | `baef29f85f8d2c456cb18b50c4306ee5cd7de8164a1393738a897e78ec6ed8c9` | 848 |
+| `docs/adr/ADR-005-transactional-outbox.md` | `3b8077df15ba9832f3343bd2cae9c32a43a752a12d4276c7ab63f4e39f9bfd0b` | 942 |
+| `docs/adr/ADR-006-provider-simulator-only.md` | `e8d1e55684ed2e5eba83bc9f2f4604e68e4a3d05f4d9a32ba84150440e8ff46a` | 942 |
+| `docs/adr/ADR-007-delay-kafka-redis-debezium.md` | `59a509e5bf5d3e81232820f0e2272bf723aae2ef586ec2d688be27849a4e0da1` | 832 |
+| `docs/adr/ADR-008-jooq-modulith-archunit.md` | `703a1dc4d97a90b507d37301025d9048499647077d3915c911b84618a800c477` | 924 |
+| `docs/adr/ADR-009-uuidv7-identifiers.md` | `f97182b96e74f45c6b35ab1c66e560cb388fc74a3735079827944769293d320a` | 723 |
+| `docs/adr/ADR-010-ledger-database-immutability.md` | `2733b31c58100a5e8e79da0d8daa76af16e50949f9f0b8174c5abc2d93f03b7a` | 903 |
+| `docs/api/api-behaviour-contract.md` | `eb864bc0515d2e0f7ca81dd7a5e26b42e8296b66cefce1c3b7b91a381d9ad2fd` | 2529 |
+| `docs/api/error-catalog.md` | `920befe03dfcdec0bfd12133031eafc4647ca5882492ac5cb4704661d68493b6` | 1679 |
+| `docs/api/idempotency-contract.md` | `9f668c2e0093abecbb3b34edb3d75bf764e32b296bd2f11a70b7d09e57146759` | 1457 |
+| `docs/architecture/container-design.md` | `e917a2fbda41235b2c745fe26452d38d8d18f6a710367d5d24eb7992eb263bb2` | 1741 |
+| `docs/architecture/data-ownership-and-consistency.md` | `a4910e03371bb9cfea3da547c65197009b17924039ba2243af6b82ad1ab558e0` | 1970 |
+| `docs/architecture/first-vertical-slice.md` | `5b61ac664ee0ea584fcce0ad93bce64e699afa8797c7d8cb7dbca47e70797084` | 2111 |
+| `docs/architecture/module-boundaries.md` | `c449022d3bc04fe0f1d3a85872ec397ac7dd356bd09e821b02e136b37e634d1c` | 1052 |
+| `docs/architecture/relational-model-and-constraints.md` | `13114b898fa26368ff5d1ee9bc2912a3057e38192eedf6e1263504a8e0ac41b6` | 3058 |
+| `docs/architecture/system-context.md` | `c2addb542e5d0ffad65d21e34cf2cf8cea6c8f2975068e77cf96a47b64098533` | 1319 |
+| `docs/architecture/trust-boundaries.md` | `2dece470e4aab32409e24cabed3f0733b74041fccd06f714c0fdbdc5b6eebdad` | 2191 |
+| `docs/disaster-recovery/evidence/README.md` | `685e877d35713bdb4e9ecc2569bf3fa0e8aead8fb48f0485fafb1b719b39c91c` | 343 |
+| `docs/disaster-recovery/recovery-policy.md` | `9abf2d9dbb3ce4e6209812afbc9369417e338adff2513f7df925717c7dd7bee9` | 2597 |
+| `docs/disaster-recovery/restore-and-replay-exercise-plan.md` | `01a0e597ab97fedc6f85ae41bea53e9569c79458d976e61a788af27bb7927488` | 1216 |
+| `docs/domain/actors-and-use-cases.md` | `a99e71d8b803d38267492b16ed6ea0a3122b5604895359b191578ef4846add89` | 2049 |
+| `docs/domain/domain-glossary.md` | `c895b09314086b7266c3be93e7d1655066d230d843cf5cd75bbeb8dcaea67cde` | 4621 |
+| `docs/domain/ledger-account-model-and-posting-policies.md` | `246cf333e5a8fee8eaf89f5edd75e3f6f48c2228d63a5a45180cfa59e139a75a` | 4221 |
+| `docs/domain/ledger-invariants.md` | `32d0402b3b21cda786329a2c99fcf31738002329786e27333d82cbd3e7c3aa75` | 2347 |
+| `docs/domain/payment-invariants.md` | `e4dea5c87ec3f89475c7202de1b971c9ea4072d3d27fbaf49c1324679bfa10a4` | 2703 |
+| `docs/domain/payment-state-machine.md` | `94293d4f445026f199c78780bdf6d182d41cf2865333b0c1b3f8a0af9c0dbd72` | 5755 |
+| `docs/domain/reconciliation-invariants.md` | `a9f07ae3fdc2eb216e2eb65a56be889cd3693a7a1249b118184dce0a4d3cde9f` | 1589 |
+| `docs/domain/reconciliation-state-machines.md` | `41a7626d8f028dfce86a521a82011373dae68e1204deb3119a6ef4f4cfd01747` | 1547 |
+| `docs/domain/security-invariants.md` | `f64289b6377b17f30f6a6f66000297d23ec975d644cba72770a3ea80ae4ee87e` | 2228 |
+| `docs/domain/settlement-and-payout-state-machines.md` | `41dca888a0f187fb672414c16a4f859f85e1310792ee2b05a15ec387676d7643` | 2103 |
+| `docs/domain/settlement-invariants.md` | `1c8ac2f50efe35719814ea187182322a24285836b51c867fe0e8caac87bc494c` | 1577 |
+| `docs/failure-modes/remote-operation-failure-matrix.md` | `e1e3f4b667e352597758674c464043ee9e0c2dc3ff6535e6e36f6350d65757d1` | 5510 |
+| `docs/observability/alert-catalog.md` | `44fa50e9a1e45c7406841d9b42de08882eb9edd75ad2399f9a858adce5a9d1df` | 1042 |
+| `docs/observability/audit-event-specification.md` | `fe4f8926a404e7b0a5cc4bf79c7311026273e307351569e9f30a62ce0ed22296` | 978 |
+| `docs/observability/observability-specification.md` | `8631c910d645427965cedaecd4c5eaa8154b7b42b0f6796fe5ec145410cd56d4` | 2540 |
+| `docs/product/core-workflows.md` | `95b5640fc77af46ac6a9517b1f9b2148943c8a2cfd8a1561a1ff8bc5112315bd` | 2586 |
+| `docs/product/operator-experience.md` | `fe77765a19f92c0d626ff4993f0c55a353aca39daa898ee284dd691ee77b859c` | 1752 |
+| `docs/product/personas-and-jobs.md` | `3020827731b8b425857a75e4e57fece02e03f03b8508a888ccb0ae47b457c2c1` | 1837 |
+| `docs/product/product-principles.md` | `47c28bce095cd322f08412fe71aaeffb22d4eabdb2dad6f6f93747ed3ae645ad` | 2605 |
+| `docs/review/assumptions-and-open-decisions.md` | `7c1112b9713944672951129bba603dc1f81718a41e2dbac27d2c77835558ac50` | 991 |
+| `docs/review/batch-0-exit-criteria.md` | `92ae93e31e9e21ede4e8e7ac89d4229352027b1eeb690d45eeb001b2569372ce` | 1883 |
+| `docs/review/batch-roadmap.md` | `94b346cec669e8162c06c4c67a422819730a10a576fa96bb648daf04dd96a2f4` | 1342 |
+| `docs/review/implementation-decisions.md` | `9682c1ad663eaca9242c34c38722e1eb4d265d241ce452530c53ffb038d08407` | 2247 |
+| `docs/review/p0-p1-p2-closure-matrix.md` | `0dc9cd7a0c728d83c0f0e8043194fbc7d29084177c7c1c3c8c08444bfbd1d3fa` | 1652 |
+| `docs/review/risk-register.csv` | `7cde5e5499501d80c75f96ca56daae8bfc791847b7e6c74acbca192bc8ef1029` | 2438 |
+| `docs/review/validation-report.md` | `abc86c2a2c166c43a09968899beb82091a512c9bd64e5c64c151ac3652591e88` | 1579 |
+| `docs/runbooks/README.md` | `b70790d60c0e70c1c7c5e69c2380b54d3839b9610d0af6ce89073b3ddf0261b4` | 813 |
+| `docs/runbooks/database-connection-exhaustion.md` | `bd618c76944ffeede69f14bfe98edcb54dbf7416d1b1ae6d121e4d327a09d90a` | 1668 |
+| `docs/runbooks/dead-letter-replay.md` | `ad6a8f96e40767862fa6be4d16f1a2e878153aa7db0adb67490570f16102a1ad` | 1459 |
+| `docs/runbooks/failed-deployment-rollback.md` | `070b28eb35da134c7c4aac428ce4ef6e912d63b4b5560c0a3776d8318ae6293f` | 1495 |
+| `docs/runbooks/ledger-imbalance-alarm.md` | `74db775291047f29b7aa6b18b52988e1ae74a30b17d722c9ad83a9d0aa5a182b` | 1601 |
+| `docs/runbooks/outbox-or-consumer-lag.md` | `9146699dc2347a26fbc7351d5218b38fd810850e47c533f89ee4eef2468fc6d5` | 1459 |
+| `docs/runbooks/provider-outage.md` | `bf9901436d5a2f99bc5daed90937d3b2bfa6a18c644f1eaa27bd5709e4b00325` | 1847 |
+| `docs/runbooks/reconciliation-backlog.md` | `ccbedb4863c93fa56601a90f4a67f9703158e7795a446937709ce2adf2309057` | 1528 |
+| `docs/runbooks/secret-compromise.md` | `cb6c47c6ed89c36c282e7b6152291e72864b4625bb7477ab1fbaf0182686f29a` | 1455 |
+| `docs/runbooks/stuck-settlement-batch.md` | `a56c3074e12496e827aed08bc4b0ab49c58dfa430890555839017667b5825502` | 1450 |
+| `docs/schema/event-envelope-and-evolution.md` | `5fc4b17c2577a2f2433e930aa734511fce5586754fa0411ca780eeb287c61b09` | 1516 |
+| `docs/security/authorization-matrix.md` | `35af4e3b11722b82a1c96c0040317f2191fb3c6aaf8dd4af9479f6505661b5e4` | 1389 |
+| `docs/security/data-classification-and-retention.md` | `4e41ea0c958ff06e6b74eff250465ad99326f405345c56cd7b90c04190e4ccba` | 941 |
+| `docs/slo/service-level-objectives.md` | `002554557d01c339edda7ec4a5fd404b2a0075ffc22feef2114b304e43e4c3f5` | 2502 |
+| `docs/slo/workload-and-capacity-assumptions.md` | `bd178b7d59d1474f6d56c2dcb095c901f99562572c53b0b4a2e6ea40602f8788` | 1517 |
+| `docs/test-strategy/failure-scenario-traceability.csv` | `374595ef719ebcf7fd0970c37fb3858259c8f57899e4d0f74ff6e7e9b0430146` | 1468 |
+| `docs/test-strategy/invariant-test-traceability.csv` | `c15714008364c0b730e3a73a9182aabd47977045278ade81db345a95c0e84d0c` | 30638 |
+| `docs/test-strategy/test-strategy-and-traceability.md` | `2178fd28c26015428a4fd36de72b1421fd09626782defbb2f93bdfd754c2d2a3` | 1710 |
+| `docs/threat-model/repository-threat-model.md` | `6880a003cef0ff6a70bea00472f9da520a97e1131f75b90a6bd9e3ef143e589f` | 7394 |
+| `scripts/validate_batch0.py` | `05ea3b19b1afe9951cbd1c116e00fdeddc6e1f6759040fa492730c52942a56b4` | 2636 |
+
+Run the command shown in `scripts/validate_batch0.py` usage notes to verify paths, checksums, invariant uniqueness, traceability, required artifacts, and state-machine markers.

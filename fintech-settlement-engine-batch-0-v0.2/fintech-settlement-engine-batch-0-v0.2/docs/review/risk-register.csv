@@ -1,0 +1,13 @@
+Risk ID,Risk,Impact,Likelihood,Area,Owner,Primary Controls,Verification,Residual Risk,Status
+RISK-001,Duplicate external financial effect after timeout,Critical,Medium,Capture/refund/payout,Payment Domain Owner,Operation keys; UNKNOWN states; query/reconciliation; idempotency,Failure-injection E2E,Critical,Open until implementation
+RISK-002,Unbalanced or financially incorrect ledger posting,Critical,Low,Ledger,Ledger Domain Owner,Posting policy; balance checks; DB transaction/constraints; immutable history,"Property, integration, posting-policy tests",Critical,Open until Batch 1/4
+RISK-003,Cross-merchant access,Critical,Medium,API/data,Security Owner,Principal-derived scope; tenant FKs; object authorization,Security integration suite,Low,Open until Batch 2
+RISK-004,Forged or replayed provider callback,Critical,Medium,Provider ingress,Security/Payment Owners,"Signature, timestamp, replay window, event dedupe",Negative callback tests,Low,Open until Batch 3
+RISK-005,Unsafe distributed complexity too early,High,High,Delivery,Principal Engineer,Modular monolith; extraction criteria,ADR/architecture tests,Low,Controlled
+RISK-006,Ledger history mutation,Critical,Low,Database,Ledger/DB Owners,No mutation API; grants; triggers; reversal only,DB permission/trigger tests,Low,Open until Batch 1
+RISK-007,Secret leakage in telemetry,High,Medium,Observability,Security Owner,Allowlist fields; redaction; canary scan,Telemetry redaction tests,Low,Open until Batch 11
+RISK-008,Duplicate merchant payout,Critical,Medium,Settlement,Settlement Owner,Deterministic key; leases; PAYOUT_UNKNOWN,Concurrency/restart E2E,Low,Deferred to Batch 7
+RISK-009,Reconciliation hides or misclassifies difference,High,Medium,Reconciliation,Reconciliation Owner,Immutable evidence; deterministic rules; append-only resolution,Reconciliation integration,Low,Deferred to Batch 8
+RISK-010,Outbox duplicate causes duplicate consumer effect,High,High,Messaging,Platform/Consumer Owners,Stable event ID; inbox; idempotent consumer,Replay tests,Low,Deferred to Batch 9
+RISK-011,Restore resumes workers with duplicate side effects,Critical,Medium,DR,Incident/Domain Owners,Paused resume; checkpoint review; provider reconciliation,Restore/replay game day,Low,Deferred evidence
+RISK-012,Hot merchant exhausts shared capacity,High,Medium,Scalability,Platform Owner,Per-merchant limits; bulkheads; load shedding,Load test,Medium,Deferred to Batch 12

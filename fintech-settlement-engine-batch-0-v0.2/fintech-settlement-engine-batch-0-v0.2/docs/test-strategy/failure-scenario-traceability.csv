@@ -1,0 +1,10 @@
+Failure ID,Operation,Injected condition,Expected state/effect,Evidence gate,Planned batch
+FM-AUTH-001,Authorization,Provider executes and response is lost,AUTHORIZATION_UNKNOWN and no independent retry,Original operation query/callback resolves,Batch 3
+FM-CAP-001,Capture,Provider succeeds then app crashes before local commit,CAPTURE_UNKNOWN/orphan evidence reconciliation and one ledger posting,Query/statement plus source uniqueness,Batch 4
+FM-CANCEL-001,Cancellation,Cancel and capture commands race,At most one preparation; ambiguity blocks both,Version/attempt/operation-key evidence,Batch 3
+FM-REFUND-001,Refund,Second partial refund races first,Refund total never exceeds capture and one winner commits,Optimistic lock/idempotency,Batch 6
+FM-LEDGER-001,Ledger,Failure after transaction header insert,No header/entries/outbox committed,Transaction rollback query,Batch 1
+FM-OUTBOX-001,Outbox,Publish succeeds then publisher crashes before mark,Same event ID republishes and consumer effect remains one,Inbox/idempotency,Batch 5/9
+FM-PAYOUT-001,Payout,External success response lost,PAYOUT_UNKNOWN and no second instruction,Provider query/statement,Batch 7
+FM-IMPORT-001,Statement import,Worker killed after checkpoint,Resume without duplicate rows/matches,Checksum/checkpoint uniqueness,Batch 8
+FM-RESTORE-001,Recovery,Restore before latest provider success,Reconciliation restores knowledge without duplicate side effect,Provider operation/source IDs,Batch 12
