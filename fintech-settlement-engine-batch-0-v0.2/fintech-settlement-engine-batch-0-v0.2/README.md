@@ -1,3 +1,6 @@
+# Fintech Settlement Engine
+
+
 # Fintech Settlement Engine — Batch 0 v0.2
 
 **Batch:** Product, Domain, Architecture, Reliability, and Safety Constitution  
@@ -59,3 +62,72 @@ Create payment intent
 ## Approval meaning
 
 Batch 0 approval means the constitution is safe and specific enough to begin the Money and Ledger Domain Kernel. It does not claim that runtime SLOs, restores, load tests, deployments, or replay behaviour have already been proven.
+
+------------------------------------------------------------------------------------------------------------------
+
+## Batch 1 — Money and Ledger Domain Kernel
+
+This repository builds on the approved Batch 0 v0.2 Product, Domain, and Safety Constitution.
+
+Batch 1 proves the central accounting rule before introducing HTTP, Spring Boot, PostgreSQL, Kafka, Redis, or provider calls:
+
+```text
+For every accepted ledger transaction:
+
+sum(debits) = sum(credits)
+```
+
+## Implemented
+
+- Currency-aware money stored as signed `long` minor units.
+- Exact parsing of USD, JPY, KWD, and other ISO currencies using their configured fraction digits.
+- Checked addition, subtraction, multiplication, negation, and fee arithmetic.
+- Immutable ledger accounts, posting lines, entries, and transactions.
+- Account role/type/scope validation.
+- Balanced transaction creation with deterministic entry ordering.
+- Capture, settlement, refund, reserve hold/release, and full reversal policies.
+- Posting idempotency and source financial-event uniqueness.
+- Authoritative account balance calculation from immutable entries.
+- Deterministic account lock ordering helper for the later PostgreSQL implementation.
+- Domain tests, property-test sources, architecture-test sources, and an offline self-test runner.
+
+## Not implemented in this batch
+
+- No controllers or API endpoints.
+- No Spring Boot runtime.
+- No PostgreSQL or jOOQ repositories.
+- No Kafka, Debezium, Redis, or outbox publisher.
+- No payment state machine or provider simulator.
+- No balance snapshot used to authorize writes.
+
+These omissions are deliberate. Batch 1 is the domain kernel, not an enterprise-looking scaffold.
+
+## Project structure
+
+```text
+libraries/money
+libraries/identity
+applications/fintech-application/ledger-domain
+tests/domain-tests/ledger
+tests/selftest
+docs/batch1
+scripts
+```
+
+## Verify without Maven
+
+The environment-independent verification path requires JDK 21 or newer because the source intentionally uses only language features available in Java 21 while the Maven target is Java 25.
+
+```bash
+./scripts/verify-batch1.sh
+```
+
+## Maven build
+
+With JDK 25 and Maven 3.9+:
+
+```bash
+mvn clean verify
+```
+
+The Maven test modules use JUnit 5.14.4, jqwik 1.9.3, and ArchUnit 1.4.2.

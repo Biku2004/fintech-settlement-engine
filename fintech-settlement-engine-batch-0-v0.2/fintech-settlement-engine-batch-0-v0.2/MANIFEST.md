@@ -1,81 +1,168 @@
-# Batch 0 v0.2 Manifest
+# Batch 1 Manifest
 
-Files excluding this manifest: 73
+- Project: Fintech Settlement Engine
+- Batch: 1 — Money and Ledger Domain Kernel
+- Version: 0.3.0
+- Files listed: 158
+- Hash algorithm: SHA-256
 
-| Path | SHA-256 | Bytes |
-|---|---|---:|
-| `CHANGELOG.md` | `6bb7a39a571c3e9e9f486684ab9accd57a8727196eba236849016f89ade5edd1` | 1409 |
-| `README.md` | `5a27bb03cdbc31c428728caea4b43b2684565eec8ea6f1d45cc1ddf4e57a709e` | 3483 |
-| `VERSION.md` | `16c48f0b12aaa99da63a8bd8114471a5248731f8cbcbf794a353671feed4a6d4` | 515 |
-| `docs/00-project-charter.md` | `cdf2e0d335b9b9a26a8c5c00d3f33806e94e80294454e5a52873eb8b670eb8fc` | 2723 |
-| `docs/adr/ADR-001-initial-deployment-structure.md` | `8d363969e6b08f992fb52ea651249b40403f1aa6140e359b32168ce93ea446c3` | 1128 |
-| `docs/adr/ADR-002-postgresql-authoritative-storage.md` | `9cd1556dd9377bc40d770837807254b93c896552aeac7dad0f86db5c9f694e0f` | 1074 |
-| `docs/adr/ADR-003-integer-minor-unit-money.md` | `dbe8d8973899318280381c916ebc87e887b66d2bb0055662e7f14daf0993eb2d` | 1010 |
-| `docs/adr/ADR-004-immutable-double-entry-ledger.md` | `baef29f85f8d2c456cb18b50c4306ee5cd7de8164a1393738a897e78ec6ed8c9` | 848 |
-| `docs/adr/ADR-005-transactional-outbox.md` | `3b8077df15ba9832f3343bd2cae9c32a43a752a12d4276c7ab63f4e39f9bfd0b` | 942 |
-| `docs/adr/ADR-006-provider-simulator-only.md` | `e8d1e55684ed2e5eba83bc9f2f4604e68e4a3d05f4d9a32ba84150440e8ff46a` | 942 |
-| `docs/adr/ADR-007-delay-kafka-redis-debezium.md` | `59a509e5bf5d3e81232820f0e2272bf723aae2ef586ec2d688be27849a4e0da1` | 832 |
-| `docs/adr/ADR-008-jooq-modulith-archunit.md` | `703a1dc4d97a90b507d37301025d9048499647077d3915c911b84618a800c477` | 924 |
-| `docs/adr/ADR-009-uuidv7-identifiers.md` | `f97182b96e74f45c6b35ab1c66e560cb388fc74a3735079827944769293d320a` | 723 |
-| `docs/adr/ADR-010-ledger-database-immutability.md` | `2733b31c58100a5e8e79da0d8daa76af16e50949f9f0b8174c5abc2d93f03b7a` | 903 |
-| `docs/api/api-behaviour-contract.md` | `eb864bc0515d2e0f7ca81dd7a5e26b42e8296b66cefce1c3b7b91a381d9ad2fd` | 2529 |
-| `docs/api/error-catalog.md` | `920befe03dfcdec0bfd12133031eafc4647ca5882492ac5cb4704661d68493b6` | 1679 |
-| `docs/api/idempotency-contract.md` | `9f668c2e0093abecbb3b34edb3d75bf764e32b296bd2f11a70b7d09e57146759` | 1457 |
-| `docs/architecture/container-design.md` | `e917a2fbda41235b2c745fe26452d38d8d18f6a710367d5d24eb7992eb263bb2` | 1741 |
-| `docs/architecture/data-ownership-and-consistency.md` | `a4910e03371bb9cfea3da547c65197009b17924039ba2243af6b82ad1ab558e0` | 1970 |
-| `docs/architecture/first-vertical-slice.md` | `5b61ac664ee0ea584fcce0ad93bce64e699afa8797c7d8cb7dbca47e70797084` | 2111 |
-| `docs/architecture/module-boundaries.md` | `c449022d3bc04fe0f1d3a85872ec397ac7dd356bd09e821b02e136b37e634d1c` | 1052 |
-| `docs/architecture/relational-model-and-constraints.md` | `13114b898fa26368ff5d1ee9bc2912a3057e38192eedf6e1263504a8e0ac41b6` | 3058 |
-| `docs/architecture/system-context.md` | `c2addb542e5d0ffad65d21e34cf2cf8cea6c8f2975068e77cf96a47b64098533` | 1319 |
-| `docs/architecture/trust-boundaries.md` | `2dece470e4aab32409e24cabed3f0733b74041fccd06f714c0fdbdc5b6eebdad` | 2191 |
-| `docs/disaster-recovery/evidence/README.md` | `685e877d35713bdb4e9ecc2569bf3fa0e8aead8fb48f0485fafb1b719b39c91c` | 343 |
-| `docs/disaster-recovery/recovery-policy.md` | `9abf2d9dbb3ce4e6209812afbc9369417e338adff2513f7df925717c7dd7bee9` | 2597 |
-| `docs/disaster-recovery/restore-and-replay-exercise-plan.md` | `01a0e597ab97fedc6f85ae41bea53e9569c79458d976e61a788af27bb7927488` | 1216 |
-| `docs/domain/actors-and-use-cases.md` | `a99e71d8b803d38267492b16ed6ea0a3122b5604895359b191578ef4846add89` | 2049 |
-| `docs/domain/domain-glossary.md` | `c895b09314086b7266c3be93e7d1655066d230d843cf5cd75bbeb8dcaea67cde` | 4621 |
-| `docs/domain/ledger-account-model-and-posting-policies.md` | `246cf333e5a8fee8eaf89f5edd75e3f6f48c2228d63a5a45180cfa59e139a75a` | 4221 |
-| `docs/domain/ledger-invariants.md` | `32d0402b3b21cda786329a2c99fcf31738002329786e27333d82cbd3e7c3aa75` | 2347 |
-| `docs/domain/payment-invariants.md` | `e4dea5c87ec3f89475c7202de1b971c9ea4072d3d27fbaf49c1324679bfa10a4` | 2703 |
-| `docs/domain/payment-state-machine.md` | `94293d4f445026f199c78780bdf6d182d41cf2865333b0c1b3f8a0af9c0dbd72` | 5755 |
-| `docs/domain/reconciliation-invariants.md` | `a9f07ae3fdc2eb216e2eb65a56be889cd3693a7a1249b118184dce0a4d3cde9f` | 1589 |
-| `docs/domain/reconciliation-state-machines.md` | `41a7626d8f028dfce86a521a82011373dae68e1204deb3119a6ef4f4cfd01747` | 1547 |
-| `docs/domain/security-invariants.md` | `f64289b6377b17f30f6a6f66000297d23ec975d644cba72770a3ea80ae4ee87e` | 2228 |
-| `docs/domain/settlement-and-payout-state-machines.md` | `41dca888a0f187fb672414c16a4f859f85e1310792ee2b05a15ec387676d7643` | 2103 |
-| `docs/domain/settlement-invariants.md` | `1c8ac2f50efe35719814ea187182322a24285836b51c867fe0e8caac87bc494c` | 1577 |
-| `docs/failure-modes/remote-operation-failure-matrix.md` | `e1e3f4b667e352597758674c464043ee9e0c2dc3ff6535e6e36f6350d65757d1` | 5510 |
-| `docs/observability/alert-catalog.md` | `44fa50e9a1e45c7406841d9b42de08882eb9edd75ad2399f9a858adce5a9d1df` | 1042 |
-| `docs/observability/audit-event-specification.md` | `fe4f8926a404e7b0a5cc4bf79c7311026273e307351569e9f30a62ce0ed22296` | 978 |
-| `docs/observability/observability-specification.md` | `8631c910d645427965cedaecd4c5eaa8154b7b42b0f6796fe5ec145410cd56d4` | 2540 |
-| `docs/product/core-workflows.md` | `95b5640fc77af46ac6a9517b1f9b2148943c8a2cfd8a1561a1ff8bc5112315bd` | 2586 |
-| `docs/product/operator-experience.md` | `fe77765a19f92c0d626ff4993f0c55a353aca39daa898ee284dd691ee77b859c` | 1752 |
-| `docs/product/personas-and-jobs.md` | `3020827731b8b425857a75e4e57fece02e03f03b8508a888ccb0ae47b457c2c1` | 1837 |
-| `docs/product/product-principles.md` | `47c28bce095cd322f08412fe71aaeffb22d4eabdb2dad6f6f93747ed3ae645ad` | 2605 |
-| `docs/review/assumptions-and-open-decisions.md` | `7c1112b9713944672951129bba603dc1f81718a41e2dbac27d2c77835558ac50` | 991 |
-| `docs/review/batch-0-exit-criteria.md` | `92ae93e31e9e21ede4e8e7ac89d4229352027b1eeb690d45eeb001b2569372ce` | 1883 |
-| `docs/review/batch-roadmap.md` | `94b346cec669e8162c06c4c67a422819730a10a576fa96bb648daf04dd96a2f4` | 1342 |
-| `docs/review/implementation-decisions.md` | `9682c1ad663eaca9242c34c38722e1eb4d265d241ce452530c53ffb038d08407` | 2247 |
-| `docs/review/p0-p1-p2-closure-matrix.md` | `0dc9cd7a0c728d83c0f0e8043194fbc7d29084177c7c1c3c8c08444bfbd1d3fa` | 1652 |
-| `docs/review/risk-register.csv` | `7cde5e5499501d80c75f96ca56daae8bfc791847b7e6c74acbca192bc8ef1029` | 2438 |
-| `docs/review/validation-report.md` | `abc86c2a2c166c43a09968899beb82091a512c9bd64e5c64c151ac3652591e88` | 1579 |
-| `docs/runbooks/README.md` | `b70790d60c0e70c1c7c5e69c2380b54d3839b9610d0af6ce89073b3ddf0261b4` | 813 |
-| `docs/runbooks/database-connection-exhaustion.md` | `bd618c76944ffeede69f14bfe98edcb54dbf7416d1b1ae6d121e4d327a09d90a` | 1668 |
-| `docs/runbooks/dead-letter-replay.md` | `ad6a8f96e40767862fa6be4d16f1a2e878153aa7db0adb67490570f16102a1ad` | 1459 |
-| `docs/runbooks/failed-deployment-rollback.md` | `070b28eb35da134c7c4aac428ce4ef6e912d63b4b5560c0a3776d8318ae6293f` | 1495 |
-| `docs/runbooks/ledger-imbalance-alarm.md` | `74db775291047f29b7aa6b18b52988e1ae74a30b17d722c9ad83a9d0aa5a182b` | 1601 |
-| `docs/runbooks/outbox-or-consumer-lag.md` | `9146699dc2347a26fbc7351d5218b38fd810850e47c533f89ee4eef2468fc6d5` | 1459 |
-| `docs/runbooks/provider-outage.md` | `bf9901436d5a2f99bc5daed90937d3b2bfa6a18c644f1eaa27bd5709e4b00325` | 1847 |
-| `docs/runbooks/reconciliation-backlog.md` | `ccbedb4863c93fa56601a90f4a67f9703158e7795a446937709ce2adf2309057` | 1528 |
-| `docs/runbooks/secret-compromise.md` | `cb6c47c6ed89c36c282e7b6152291e72864b4625bb7477ab1fbaf0182686f29a` | 1455 |
-| `docs/runbooks/stuck-settlement-batch.md` | `a56c3074e12496e827aed08bc4b0ab49c58dfa430890555839017667b5825502` | 1450 |
-| `docs/schema/event-envelope-and-evolution.md` | `5fc4b17c2577a2f2433e930aa734511fce5586754fa0411ca780eeb287c61b09` | 1516 |
-| `docs/security/authorization-matrix.md` | `35af4e3b11722b82a1c96c0040317f2191fb3c6aaf8dd4af9479f6505661b5e4` | 1389 |
-| `docs/security/data-classification-and-retention.md` | `4e41ea0c958ff06e6b74eff250465ad99326f405345c56cd7b90c04190e4ccba` | 941 |
-| `docs/slo/service-level-objectives.md` | `002554557d01c339edda7ec4a5fd404b2a0075ffc22feef2114b304e43e4c3f5` | 2502 |
-| `docs/slo/workload-and-capacity-assumptions.md` | `bd178b7d59d1474f6d56c2dcb095c901f99562572c53b0b4a2e6ea40602f8788` | 1517 |
-| `docs/test-strategy/failure-scenario-traceability.csv` | `374595ef719ebcf7fd0970c37fb3858259c8f57899e4d0f74ff6e7e9b0430146` | 1468 |
-| `docs/test-strategy/invariant-test-traceability.csv` | `c15714008364c0b730e3a73a9182aabd47977045278ade81db345a95c0e84d0c` | 30638 |
-| `docs/test-strategy/test-strategy-and-traceability.md` | `2178fd28c26015428a4fd36de72b1421fd09626782defbb2f93bdfd754c2d2a3` | 1710 |
-| `docs/threat-model/repository-threat-model.md` | `6880a003cef0ff6a70bea00472f9da520a97e1131f75b90a6bd9e3ef143e589f` | 7394 |
-| `scripts/validate_batch0.py` | `05ea3b19b1afe9951cbd1c116e00fdeddc6e1f6759040fa492730c52942a56b4` | 2636 |
+## File hashes
 
-Run the command shown in `scripts/validate_batch0.py` usage notes to verify paths, checksums, invariant uniqueness, traceability, required artifacts, and state-machine markers.
+- `.gitignore` — `0c5f5e48f816ab43315f53550bcedbda8c17e5a26e22d932aa8c749455556bdd`
+- `CHANGELOG.md` — `dbe3f45b238a452e8c4034329a18a828de7c0ba86e4edc7e2814636ba37f5afc`
+- `CONTRIBUTING.md` — `fc6911f1e45ad04ea2331232be1020b674870c2ba01a8c2535054235326900a7`
+- `README.md` — `7f82d2690319e280fd582cbc5a2c2aa53b0b80ba9114ef40693c5d6a28e10023`
+- `SECURITY.md` — `ac7eefcbea3813badbea524ccabefd3b815a87f4367dc2ef2760deb4eba2aef0`
+- `VERSION.md` — `e48b351654440934cf97bf8b7780a441d737eebd1077719bb783cd14bfd2834b`
+- `applications/fintech-application/ledger-domain/pom.xml` — `6c9534db090c41fd56800862a7f92e1f40a1f01c6770532db3ab9c9a02483a2e`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/account/AccountScope.java` — `0873a37b47fe7371f325411f5a5a57f9225c8967b31873fe0235c083cbf1b913`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/account/LedgerAccount.java` — `81db3984bba3ab101d0755851f152f5d76b2571bf515b0359f5c0cbf55d987e9`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/account/LedgerAccountId.java` — `a1e0caf4bc42e069017ee2a4b5f8f864f286e9ea2bae85c4c2bd62c6836318cb`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/account/LedgerAccountRole.java` — `eabb97e40455296d8d08564cda3184d313d0bb95eb4ffb7b529977d835210028`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/account/LedgerAccountStatus.java` — `9fafa5443f24a8bb15e79986006601da532ec28bcd2d62481db698af0829afb5`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/account/LedgerAccountType.java` — `609c8e940ca3ae9041ec3798e31fae03c841ae74d7edd709ef91d972ae3dfb29`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/account/ScopeKind.java` — `8dca04bb7e774a39d7f0f60f9a75f0c18c53e9f1fbc3eee41b4a802ceb0615d6`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/error/DuplicateLedgerAccountException.java` — `71df315367a26c7e20dc78bca5928cb05c3bd30dad83f09404387c03e83b0ada`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/error/DuplicateLedgerTransactionException.java` — `50470fd73154b7078a9d0bbf00bd39d5a3d15c15528cb78af30ad97e7e2182b3`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/error/InvalidLedgerAccountException.java` — `2a47feb9abaa8c100c960fa45f87c07df360ceedbd70f5ecf6219f860caafda1`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/error/InvalidLedgerEntryException.java` — `45bc8f0bc048e168e1d99aed4b6d7cb15052fc6b22c22ba740bab1c83d972a9f`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/error/InvalidPostingPolicyException.java` — `4f594c2fd1ea84a18f4396f173216e3305f550e7019c8939063c1306ddede523`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/error/LedgerAccountClosedException.java` — `b680533a59fbc46833f2f79be048cfa6528eac53df60e591663a518dcbdbeadf`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/error/LedgerArithmeticException.java` — `d2dc78691de59a808a2bfeaa0dd509be92f46eac2156f94a9e1b646e2cd414e4`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/error/LedgerDomainException.java` — `8e8137d3b5facdaa8986ebcff8962b4248fac14f5b957f42d67c7664b2394223`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/error/LedgerErrorCode.java` — `1fc03b9918f9e6d3dc7cd42c642129b04729e3e0d6cd122d190b23272d315221`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/error/PostingIdempotencyConflictException.java` — `c1de395683a2d24457a80bcec211b2a67c35bb5216d520c36eda6d86ba19ebb5`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/error/ReversalNotAllowedException.java` — `7a10c089e8bc5b824725aa94ec2ec4797439b74f53d80bd67bcfadc42daa5d72`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/error/SourceFinancialEventConflictException.java` — `c625280c36442365b788b2f9f9859d76a76fb0d3faca0378bb27f6a3d05b19cf`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/error/UnbalancedTransactionException.java` — `cb3217d0375f85310a2423cd2d183adbe6231a2c4fe3783eed67e4c22b5fa5de`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/error/UnknownLedgerAccountException.java` — `247aa0dc6a142f96b8dc579d0772e1dda9d8e953ffae7719e16e960e67700d09`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/identity/CorrelationId.java` — `b36ec2885ecd54c149f0636abcf267a8429ee1afac37c1025271f7b3ea6b8ce4`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/identity/MerchantId.java` — `bb5330b2d8101b5445d4840c8de9a15b729fd49457d360d8f349c8405ab91cc5`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/kernel/AccountLockOrder.java` — `ec939a4dc93a2cf39acb88acd328faaf5deb2b1c55dc86bb8355b51e400ba357`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/kernel/BalanceSnapshot.java` — `ba7fa449e9fcc03e9d944cd9bf9b9028f581ceb6791f052a430bd9d888e73f12`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/kernel/LedgerBalanceCalculator.java` — `63eca9fe87f32ddeeaf467736b7caf702ec9cadf3662d0f4acdc8f5ba4577696`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/kernel/LedgerKernel.java` — `351c18e1c246f811f3d6b0b949d21830190893016d9264493ff01b005cb14df6`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/CapturePostingPolicy.java` — `5da39dabec5148d87c7f7d087af86b90ab25d2e1bd6731220dde1431dd608209`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/PercentageFeePolicy.java` — `4857880b93f0c6de909a8e01613d4c5b6e7ff56903d475fb9e5ab0795c909e39`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/PostingPolicySupport.java` — `f0b30b7b219a9e1ff8079bdac979679150e60150ea104391246dc8a68a101d54`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/RefundPostingPolicy.java` — `bc3fa5853e2ab45a85fbd38ffac2ee5d593d0108e48003590ed7d20cc27df123`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/ReservePostingPolicy.java` — `d03d8a67a1f7c5382958989a2119db3038fc7cd7eb484d9fe286a5ddbf0f8990`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/ReversalPostingPolicy.java` — `f3f2eebfffafa068bf7a5390a0f518dd02d71c5a12ec91681af2563c647a7c87`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/SettlementPostingPolicy.java` — `8492be6b28efd0bf1ee2d9fd03b9519d1a1fb245acddba27cf95edafedeb633e`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/posting/FinancialEventType.java` — `670271a5086af4e8d0c9079b220419c81401f0d1bbbcfd35d2c24bcaef3c27c8`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/posting/PostingCanonicalizer.java` — `db800f355b37c3996e252bbf86fa01729df58335ff1b4e0d575b8ec5a61e9240`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/posting/PostingCommand.java` — `ffce04eaaf1c152f348a00394f6ccd1bae769bc792c47848bf9b0c87240e2803`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/posting/PostingContext.java` — `eb36ba5ed6c5aeeec1fc42caefe987c526cf20f502ba7d1611c6d55073ebdabd`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/posting/PostingFingerprint.java` — `bf1a89b9981df9819bc6b42c56366a3d66825822973cc880c074ab5133e16288`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/posting/PostingIdempotencyKey.java` — `8254254c9fb0680835fbcba3a9852fc0a6b1b70ab4cb72a73491b0f31e6830d6`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/posting/PostingLine.java` — `2f2658dc21320c7a1cc4425817f164def187930fe495b5f68c86dae21d85884d`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/posting/PostingOutcome.java` — `433054a7a10a16e57f3cc7c9953a5deb9acf923ba780afb0ae5fc5f16e7cd55d`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/posting/PostingOutcomeType.java` — `5a1dcd9dd01503c27affb028a6636aa2bb697468ecbc6125bcb47401bce079b3`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/posting/PostingPolicyReference.java` — `2c47ce9d34d7eb4a85d5beb9cac84d1f7efc91213ff53d8ababe5c2f6c814428`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/posting/SourceReference.java` — `ccd4e07922fb394511504a001d37bb821ba7f40226d6e13603df846faf518319`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/transaction/EntryDirection.java` — `d5d5b12780f4763d4732de72e1dd6f092f68b84a410cfefde1c764a7e8592d5d`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/transaction/LedgerEntry.java` — `b5b09b7064010b1c0580fd8df751addf83df21322eb0b9222ef9ccbfeea45b03`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/transaction/LedgerTransaction.java` — `35a7dbabf2cc3a67fa00d3b345fe531b628c8969af743e11e1f12dc05a830853`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/transaction/LedgerTransactionFactory.java` — `287ac69ba5bfa8fe39d531748dab8f3fc2636babafd3a4d55d630c767347088a`
+- `applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/transaction/LedgerTransactionId.java` — `4c214815efbb5b2b85ed2b8be2c4c22a89984aa00c881909d0251212af9aa84a`
+- `docs/00-project-charter.md` — `cdf2e0d335b9b9a26a8c5c00d3f33806e94e80294454e5a52873eb8b670eb8fc`
+- `docs/adr/ADR-001-initial-deployment-structure.md` — `8d363969e6b08f992fb52ea651249b40403f1aa6140e359b32168ce93ea446c3`
+- `docs/adr/ADR-002-postgresql-authoritative-storage.md` — `9cd1556dd9377bc40d770837807254b93c896552aeac7dad0f86db5c9f694e0f`
+- `docs/adr/ADR-003-integer-minor-unit-money.md` — `dbe8d8973899318280381c916ebc87e887b66d2bb0055662e7f14daf0993eb2d`
+- `docs/adr/ADR-004-immutable-double-entry-ledger.md` — `baef29f85f8d2c456cb18b50c4306ee5cd7de8164a1393738a897e78ec6ed8c9`
+- `docs/adr/ADR-005-transactional-outbox.md` — `3b8077df15ba9832f3343bd2cae9c32a43a752a12d4276c7ab63f4e39f9bfd0b`
+- `docs/adr/ADR-006-provider-simulator-only.md` — `e8d1e55684ed2e5eba83bc9f2f4604e68e4a3d05f4d9a32ba84150440e8ff46a`
+- `docs/adr/ADR-007-delay-kafka-redis-debezium.md` — `59a509e5bf5d3e81232820f0e2272bf723aae2ef586ec2d688be27849a4e0da1`
+- `docs/adr/ADR-008-jooq-modulith-archunit.md` — `703a1dc4d97a90b507d37301025d9048499647077d3915c911b84618a800c477`
+- `docs/adr/ADR-009-uuidv7-identifiers.md` — `f97182b96e74f45c6b35ab1c66e560cb388fc74a3735079827944769293d320a`
+- `docs/adr/ADR-010-ledger-database-immutability.md` — `2733b31c58100a5e8e79da0d8daa76af16e50949f9f0b8174c5abc2d93f03b7a`
+- `docs/api/api-behaviour-contract.md` — `eb864bc0515d2e0f7ca81dd7a5e26b42e8296b66cefce1c3b7b91a381d9ad2fd`
+- `docs/api/error-catalog.md` — `920befe03dfcdec0bfd12133031eafc4647ca5882492ac5cb4704661d68493b6`
+- `docs/api/idempotency-contract.md` — `9f668c2e0093abecbb3b34edb3d75bf764e32b296bd2f11a70b7d09e57146759`
+- `docs/architecture/container-design.md` — `e917a2fbda41235b2c745fe26452d38d8d18f6a710367d5d24eb7992eb263bb2`
+- `docs/architecture/data-ownership-and-consistency.md` — `a4910e03371bb9cfea3da547c65197009b17924039ba2243af6b82ad1ab558e0`
+- `docs/architecture/first-vertical-slice.md` — `5b61ac664ee0ea584fcce0ad93bce64e699afa8797c7d8cb7dbca47e70797084`
+- `docs/architecture/module-boundaries.md` — `c449022d3bc04fe0f1d3a85872ec397ac7dd356bd09e821b02e136b37e634d1c`
+- `docs/architecture/relational-model-and-constraints.md` — `13114b898fa26368ff5d1ee9bc2912a3057e38192eedf6e1263504a8e0ac41b6`
+- `docs/architecture/system-context.md` — `c2addb542e5d0ffad65d21e34cf2cf8cea6c8f2975068e77cf96a47b64098533`
+- `docs/architecture/trust-boundaries.md` — `2dece470e4aab32409e24cabed3f0733b74041fccd06f714c0fdbdc5b6eebdad`
+- `docs/batch1/README.md` — `882ea435badcc8df2bc46c7b1534df0dc7af45d8193c5e2ae7bfe04215444e6d`
+- `docs/batch1/batch1-exit-criteria.md` — `54b3043a90f7fb0f07a335e6270cf8223df29fb5c5fbecfbda888c5d9a76cbd0`
+- `docs/batch1/code-map.md` — `bf35600d66e3ed42bc5b798de4f512ef21d91e65b2fdd2da4578d14cfa1b98d9`
+- `docs/batch1/deferred-work.md` — `c003f8a1ec785b33e69c82efec7d0c777ba4616b39fad8a0f2df632fc6c35c55`
+- `docs/batch1/dependency-pins.md` — `c3e25122ab4f5b0df0bde711ca79324b84e55d21b35f6cee2c3b294da39430b5`
+- `docs/batch1/design-decisions.md` — `646c7b41e82b19a42d994addb74e670591f21234f255171ccc398051d3ff829e`
+- `docs/batch1/invariant-coverage.md` — `25ca6efdca4ee8c92a0380b04edce5fb989f4bfc7bd4abed78d0ca1df2b33d4d`
+- `docs/batch1/review-checklist.md` — `ee8191e2ac8b59d0b576803a788632fe98f644bbfebb67dd7b99c98dddafc22c`
+- `docs/batch1/source-inventory.csv` — `d5b60d5b59d69a42a7ab63d3d7066592fcc15e5c87b7e5c98562b69c01ece5fd`
+- `docs/batch1/test-results.md` — `e37f8979239919884db3e1e249f1bd433571539f61f829ccb40172655e78ab01`
+- `docs/batch1/validation-report.md` — `1429b0df3df02597fdf8fbf7b0f86bc4e4088051c1ee951180381c0934e11857`
+- `docs/disaster-recovery/evidence/README.md` — `685e877d35713bdb4e9ecc2569bf3fa0e8aead8fb48f0485fafb1b719b39c91c`
+- `docs/disaster-recovery/recovery-policy.md` — `9abf2d9dbb3ce4e6209812afbc9369417e338adff2513f7df925717c7dd7bee9`
+- `docs/disaster-recovery/restore-and-replay-exercise-plan.md` — `01a0e597ab97fedc6f85ae41bea53e9569c79458d976e61a788af27bb7927488`
+- `docs/domain/actors-and-use-cases.md` — `a99e71d8b803d38267492b16ed6ea0a3122b5604895359b191578ef4846add89`
+- `docs/domain/domain-glossary.md` — `c895b09314086b7266c3be93e7d1655066d230d843cf5cd75bbeb8dcaea67cde`
+- `docs/domain/ledger-account-model-and-posting-policies.md` — `246cf333e5a8fee8eaf89f5edd75e3f6f48c2228d63a5a45180cfa59e139a75a`
+- `docs/domain/ledger-invariants.md` — `32d0402b3b21cda786329a2c99fcf31738002329786e27333d82cbd3e7c3aa75`
+- `docs/domain/payment-invariants.md` — `e4dea5c87ec3f89475c7202de1b971c9ea4072d3d27fbaf49c1324679bfa10a4`
+- `docs/domain/payment-state-machine.md` — `94293d4f445026f199c78780bdf6d182d41cf2865333b0c1b3f8a0af9c0dbd72`
+- `docs/domain/reconciliation-invariants.md` — `a9f07ae3fdc2eb216e2eb65a56be889cd3693a7a1249b118184dce0a4d3cde9f`
+- `docs/domain/reconciliation-state-machines.md` — `41a7626d8f028dfce86a521a82011373dae68e1204deb3119a6ef4f4cfd01747`
+- `docs/domain/security-invariants.md` — `f64289b6377b17f30f6a6f66000297d23ec975d644cba72770a3ea80ae4ee87e`
+- `docs/domain/settlement-and-payout-state-machines.md` — `41dca888a0f187fb672414c16a4f859f85e1310792ee2b05a15ec387676d7643`
+- `docs/domain/settlement-invariants.md` — `1c8ac2f50efe35719814ea187182322a24285836b51c867fe0e8caac87bc494c`
+- `docs/failure-modes/remote-operation-failure-matrix.md` — `e1e3f4b667e352597758674c464043ee9e0c2dc3ff6535e6e36f6350d65757d1`
+- `docs/observability/alert-catalog.md` — `44fa50e9a1e45c7406841d9b42de08882eb9edd75ad2399f9a858adce5a9d1df`
+- `docs/observability/audit-event-specification.md` — `fe4f8926a404e7b0a5cc4bf79c7311026273e307351569e9f30a62ce0ed22296`
+- `docs/observability/observability-specification.md` — `8631c910d645427965cedaecd4c5eaa8154b7b42b0f6796fe5ec145410cd56d4`
+- `docs/product/core-workflows.md` — `95b5640fc77af46ac6a9517b1f9b2148943c8a2cfd8a1561a1ff8bc5112315bd`
+- `docs/product/operator-experience.md` — `fe77765a19f92c0d626ff4993f0c55a353aca39daa898ee284dd691ee77b859c`
+- `docs/product/personas-and-jobs.md` — `3020827731b8b425857a75e4e57fece02e03f03b8508a888ccb0ae47b457c2c1`
+- `docs/product/product-principles.md` — `47c28bce095cd322f08412fe71aaeffb22d4eabdb2dad6f6f93747ed3ae645ad`
+- `docs/review/assumptions-and-open-decisions.md` — `7c1112b9713944672951129bba603dc1f81718a41e2dbac27d2c77835558ac50`
+- `docs/review/batch-0-exit-criteria.md` — `92ae93e31e9e21ede4e8e7ac89d4229352027b1eeb690d45eeb001b2569372ce`
+- `docs/review/batch-roadmap.md` — `94b346cec669e8162c06c4c67a422819730a10a576fa96bb648daf04dd96a2f4`
+- `docs/review/implementation-decisions.md` — `9682c1ad663eaca9242c34c38722e1eb4d265d241ce452530c53ffb038d08407`
+- `docs/review/p0-p1-p2-closure-matrix.md` — `0dc9cd7a0c728d83c0f0e8043194fbc7d29084177c7c1c3c8c08444bfbd1d3fa`
+- `docs/review/risk-register.csv` — `7cde5e5499501d80c75f96ca56daae8bfc791847b7e6c74acbca192bc8ef1029`
+- `docs/review/validation-report.md` — `abc86c2a2c166c43a09968899beb82091a512c9bd64e5c64c151ac3652591e88`
+- `docs/runbooks/README.md` — `b70790d60c0e70c1c7c5e69c2380b54d3839b9610d0af6ce89073b3ddf0261b4`
+- `docs/runbooks/database-connection-exhaustion.md` — `bd618c76944ffeede69f14bfe98edcb54dbf7416d1b1ae6d121e4d327a09d90a`
+- `docs/runbooks/dead-letter-replay.md` — `ad6a8f96e40767862fa6be4d16f1a2e878153aa7db0adb67490570f16102a1ad`
+- `docs/runbooks/failed-deployment-rollback.md` — `070b28eb35da134c7c4aac428ce4ef6e912d63b4b5560c0a3776d8318ae6293f`
+- `docs/runbooks/ledger-imbalance-alarm.md` — `74db775291047f29b7aa6b18b52988e1ae74a30b17d722c9ad83a9d0aa5a182b`
+- `docs/runbooks/outbox-or-consumer-lag.md` — `9146699dc2347a26fbc7351d5218b38fd810850e47c533f89ee4eef2468fc6d5`
+- `docs/runbooks/provider-outage.md` — `bf9901436d5a2f99bc5daed90937d3b2bfa6a18c644f1eaa27bd5709e4b00325`
+- `docs/runbooks/reconciliation-backlog.md` — `ccbedb4863c93fa56601a90f4a67f9703158e7795a446937709ce2adf2309057`
+- `docs/runbooks/secret-compromise.md` — `cb6c47c6ed89c36c282e7b6152291e72864b4625bb7477ab1fbaf0182686f29a`
+- `docs/runbooks/stuck-settlement-batch.md` — `a56c3074e12496e827aed08bc4b0ab49c58dfa430890555839017667b5825502`
+- `docs/schema/event-envelope-and-evolution.md` — `5fc4b17c2577a2f2433e930aa734511fce5586754fa0411ca780eeb287c61b09`
+- `docs/security/authorization-matrix.md` — `35af4e3b11722b82a1c96c0040317f2191fb3c6aaf8dd4af9479f6505661b5e4`
+- `docs/security/data-classification-and-retention.md` — `4e41ea0c958ff06e6b74eff250465ad99326f405345c56cd7b90c04190e4ccba`
+- `docs/slo/service-level-objectives.md` — `002554557d01c339edda7ec4a5fd404b2a0075ffc22feef2114b304e43e4c3f5`
+- `docs/slo/workload-and-capacity-assumptions.md` — `bd178b7d59d1474f6d56c2dcb095c901f99562572c53b0b4a2e6ea40602f8788`
+- `docs/test-strategy/failure-scenario-traceability.csv` — `374595ef719ebcf7fd0970c37fb3858259c8f57899e4d0f74ff6e7e9b0430146`
+- `docs/test-strategy/invariant-test-traceability.csv` — `c15714008364c0b730e3a73a9182aabd47977045278ade81db345a95c0e84d0c`
+- `docs/test-strategy/test-strategy-and-traceability.md` — `2178fd28c26015428a4fd36de72b1421fd09626782defbb2f93bdfd754c2d2a3`
+- `docs/threat-model/repository-threat-model.md` — `6880a003cef0ff6a70bea00472f9da520a97e1131f75b90a6bd9e3ef143e589f`
+- `libraries/identity/pom.xml` — `c5ea46287e4f099d0df67ca5a06d3ea0b285c99f34e52efd019a33fff00ede98`
+- `libraries/identity/src/main/java/com/bikash/fintechsettlement/shared/identity/UuidOrder.java` — `bff182e802eb5f0094fc31b646fa451b7289274f9dfdfdf42e40e26a4e13dd0f`
+- `libraries/identity/src/main/java/com/bikash/fintechsettlement/shared/identity/UuidV7.java` — `f4748f82196775ce0378162369b2dd43705eda92ac82eb4b5ca7fd0c4f287661`
+- `libraries/identity/src/main/java/com/bikash/fintechsettlement/shared/identity/UuidV7Generator.java` — `bd31db8dc6b7db8fed19b2a828b21ba55c4d49f64887c5aecbac6aae0482d0e1`
+- `libraries/money/pom.xml` — `92fb07a531c0dc1ffa02cd2d787b643072fc1a844850805d5d71a6d8c64cd166`
+- `libraries/money/src/main/java/com/bikash/fintechsettlement/shared/money/CurrencyMismatchException.java` — `121ac92248ee909c2592297a9d01af91646e3588588f6b48c2d3e1d7c9fdea24`
+- `libraries/money/src/main/java/com/bikash/fintechsettlement/shared/money/InvalidMoneyAmountException.java` — `5f5ada786caf8649151414c14053dfc53c4ed96da6af49206ad6088042ef2bba`
+- `libraries/money/src/main/java/com/bikash/fintechsettlement/shared/money/Money.java` — `035b7f80189e7de7c9972337b7509951b29470a52f6be6deba59b3ce87aed524`
+- `libraries/money/src/main/java/com/bikash/fintechsettlement/shared/money/UnsupportedCurrencyException.java` — `dcad510437502f1aa9ee62ab6dd500ecce94151bd77cbb46c8f4c527aa9cd719`
+- `pom.xml` — `df509f5de9d179f0d2096528d50b581206808b861ef875435c8b0a9b1e8aa2fc`
+- `scripts/validate_batch1.py` — `e0af8de0ea176be02fa7ac458fa4c7635b59aca9d1464e00f5bd9d4e74d55c00`
+- `scripts/validate_manifest.py` — `4fe0e9747f7d4acd23efb757f2d1f8367fffd0eb1a2bc56e5dc9a7a87c2fa125`
+- `scripts/verify-batch1.sh` — `613bcb84a37cc2260670746129692d546024ea227f30c51aa01a3671ce2856d7`
+- `tests/domain-tests/ledger/pom.xml` — `9c788ae0e34df42a471c0410864db0159d479218d603dbb866fd75fbac1af0c1`
+- `tests/domain-tests/ledger/src/test/java/com/bikash/fintechsettlement/ledger/ArchitectureRulesTest.java` — `85bab8c69dfacc553a10a7a11a1f3585abbd8cc7f5462df63ea9bda5b1339b97`
+- `tests/domain-tests/ledger/src/test/java/com/bikash/fintechsettlement/ledger/IdentityTest.java` — `6a2df272335ab228687cad085e8755e2b67749d8196681f7edd15e3930231208`
+- `tests/domain-tests/ledger/src/test/java/com/bikash/fintechsettlement/ledger/LedgerFixture.java` — `4eed6b2a6f982b561daadc71038bcafb001f002f459ec6abf72cd2a98cb6cfc7`
+- `tests/domain-tests/ledger/src/test/java/com/bikash/fintechsettlement/ledger/LedgerKernelTest.java` — `7943a2bbc59302db5a3fd7c5be0d6e2bd588692f2869406a99de1c2f7ec9ac0a`
+- `tests/domain-tests/ledger/src/test/java/com/bikash/fintechsettlement/ledger/LedgerPropertyTest.java` — `e03d255d7f682cf15ba87a031b64e2c852290d38ad48ec6c86ac83873de04798`
+- `tests/domain-tests/ledger/src/test/java/com/bikash/fintechsettlement/ledger/MoneyTest.java` — `0e5a838a9aeabe6f7ca7676998f1d2bd33965d5e56b1da88afd644347ad723b9`
+- `tests/selftest/src/main/java/com/bikash/fintechsettlement/selftest/Batch1SelfTest.java` — `9aabc7a48632f33426413acb2467ae7a10a010b1641f532ce755d8340d434ec9`

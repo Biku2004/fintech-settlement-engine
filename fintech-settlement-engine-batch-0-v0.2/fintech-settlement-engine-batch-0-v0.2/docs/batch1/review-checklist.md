@@ -1,0 +1,23 @@
+# Batch 1 Review Checklist
+
+- [x] Money uses `long` minor units.
+- [x] No money field uses `double` or `float`.
+- [x] Currency scale is exact at boundaries.
+- [x] Account role/type/scope is validated.
+- [x] Entry magnitudes are positive.
+- [x] Debit and credit totals use checked arithmetic.
+- [x] Unbalanced transactions are rejected before storage.
+- [x] Immutable lists are defensively copied.
+- [x] Entry order is deterministic.
+- [x] Posting identity and source identity are distinct.
+- [x] Same key/same effect returns original transaction.
+- [x] Same key/different effect conflicts.
+- [x] Same source/same effect returns original transaction.
+- [x] Same source/different effect conflicts.
+- [x] Full reversal is an exact inverse.
+- [x] Duplicate full reversal is rejected.
+- [x] Balance is derived from immutable entries.
+- [x] Framework imports are absent from domain code.
+- [x] Offline verification passes.
+- [ ] JDK 25 Maven dependency build executed in this environment (environment lacks Maven/JDK 25).
+- [ ] PostgreSQL/jOOQ/Testcontainers evidence (intentionally deferred).
