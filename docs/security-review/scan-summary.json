@@ -1,0 +1,83 @@
+{
+  "format": "prompt-only-codex-security-review",
+  "scanId": "a3e6465a-e83a-49e9-a7ce-f89faacd8ddc",
+  "targetVersion": "0.3.0",
+  "fixedVersion": "0.3.1",
+  "scope": "entire Batch 1 repository",
+  "sealedCodexWorkbenchExport": false,
+  "findings": [
+    {
+      "id": "CS-001",
+      "title": "Caller-controlled policy label authorized wrong financial movement",
+      "severity": "high",
+      "cwe": [
+        "CWE-863",
+        "CWE-840"
+      ],
+      "status": "fixed",
+      "report": "findings/CS-001-policy-spoofing.md"
+    },
+    {
+      "id": "CS-002",
+      "title": "Posting policy was not bound to its financial source event",
+      "severity": "medium",
+      "cwe": [
+        "CWE-20",
+        "CWE-345"
+      ],
+      "status": "fixed",
+      "report": "findings/CS-002-source-event-confusion.md"
+    },
+    {
+      "id": "CS-003",
+      "title": "Platform accounts from different owners could be mixed",
+      "severity": "medium",
+      "cwe": [
+        "CWE-863",
+        "CWE-668"
+      ],
+      "status": "fixed",
+      "report": "findings/CS-003-platform-scope-mixing.md"
+    },
+    {
+      "id": "CS-004",
+      "title": "Direct transaction construction bypassed the kernel boundary",
+      "severity": "medium",
+      "cwe": [
+        "CWE-749",
+        "CWE-284"
+      ],
+      "status": "fixed",
+      "report": "findings/CS-004-construction-boundary-bypass.md"
+    }
+  ],
+  "coverage": {
+    "productionJavaFiles": 60,
+    "mavenTestSources": 7,
+    "selfTestSources": 1,
+    "runtimeSinksReviewed": [
+      "financial posting",
+      "idempotency/source registration",
+      "reversal",
+      "account scope",
+      "transaction construction"
+    ],
+    "notPresent": [
+      "HTTP endpoints",
+      "SQL",
+      "filesystem IO",
+      "network clients",
+      "deserialization",
+      "command execution",
+      "secret storage"
+    ]
+  },
+  "validation": {
+    "deterministicChecks": 33,
+    "randomizedCaptureChecks": 2000,
+    "concurrentDuplicateSubmissions": 32,
+    "repeatabilityRuns": 5,
+    "jdkUsed": "OpenJDK 21.0.10 compatibility mode",
+    "jdk25MavenRun": false
+  }
+}

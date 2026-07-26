@@ -1,0 +1,1171 @@
+diff --git a/applications/fintech-application/ledger-domain/pom.xml b/applications/fintech-application/ledger-domain/pom.xml
+index ed64274..e27b48a 100644
+--- a/applications/fintech-application/ledger-domain/pom.xml
++++ b/applications/fintech-application/ledger-domain/pom.xml
+@@ -6,7 +6,7 @@
+     <parent>
+         <groupId>com.bikash.fintechsettlement</groupId>
+         <artifactId>fintech-settlement-engine</artifactId>
+-        <version>0.3.0</version>
++        <version>0.3.1</version>
+         <relativePath>../../../pom.xml</relativePath>
+     </parent>
+     <artifactId>ledger-domain</artifactId>
+diff --git a/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/identity/PlatformId.java b/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/identity/PlatformId.java
+new file mode 100644
+index 0000000..cfd3b45
+--- /dev/null
++++ b/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/identity/PlatformId.java
+@@ -0,0 +1,17 @@
++package com.bikash.fintechsettlement.ledger.domain.identity;
++
++import com.bikash.fintechsettlement.shared.identity.UuidV7;
++
++import java.util.UUID;
++
++/** Identifies the platform boundary that owns platform-scoped ledger accounts. */
++public record PlatformId(UUID value) {
++    public PlatformId {
++        value = UuidV7.require(value, "platformId");
++    }
++
++    @Override
++    public String toString() {
++        return value.toString();
++    }
++}
+diff --git a/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/kernel/LedgerKernel.java b/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/kernel/LedgerKernel.java
+index 0ed7b92..c2a2129 100644
+--- a/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/kernel/LedgerKernel.java
++++ b/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/kernel/LedgerKernel.java
+@@ -2,12 +2,16 @@ package com.bikash.fintechsettlement.ledger.domain.kernel;
+ 
+ import com.bikash.fintechsettlement.ledger.domain.account.LedgerAccount;
+ import com.bikash.fintechsettlement.ledger.domain.account.LedgerAccountId;
++import com.bikash.fintechsettlement.ledger.domain.account.ScopeKind;
+ import com.bikash.fintechsettlement.ledger.domain.error.DuplicateLedgerAccountException;
+ import com.bikash.fintechsettlement.ledger.domain.error.DuplicateLedgerTransactionException;
++import com.bikash.fintechsettlement.ledger.domain.error.InvalidLedgerAccountException;
+ import com.bikash.fintechsettlement.ledger.domain.error.PostingIdempotencyConflictException;
+ import com.bikash.fintechsettlement.ledger.domain.error.ReversalNotAllowedException;
+ import com.bikash.fintechsettlement.ledger.domain.error.SourceFinancialEventConflictException;
+ import com.bikash.fintechsettlement.ledger.domain.error.UnknownLedgerAccountException;
++import com.bikash.fintechsettlement.ledger.domain.identity.PlatformId;
++import com.bikash.fintechsettlement.ledger.domain.policy.PostingPolicyValidator;
+ import com.bikash.fintechsettlement.ledger.domain.posting.PostingCanonicalizer;
+ import com.bikash.fintechsettlement.ledger.domain.posting.PostingCommand;
+ import com.bikash.fintechsettlement.ledger.domain.posting.PostingFingerprint;
+@@ -35,26 +39,45 @@ import java.util.Objects;
+  * retaining the same domain rules and idempotency outcomes.</p>
+  */
+ public final class LedgerKernel {
++    /**
++     * Unforgeable construction capability for ledger transactions.
++     *
++     * <p>The type is public only so the transaction package can name it. Its constructor is private
++     * and no instance is exposed, so classpath split-package code cannot manufacture the capability.
++     * Reflection or unsafe code already executing inside this JVM is outside the Batch 1 threat model.</p>
++     */
++    public static final class Access {
++        private Access() {}
++    }
+     private final Map<LedgerAccountId, LedgerAccount> accounts = new LinkedHashMap<>();
+     private final Map<LedgerTransactionId, LedgerTransaction> transactions = new LinkedHashMap<>();
+     private final Map<PostingIdempotencyKey, Registration> byIdempotency = new LinkedHashMap<>();
+     private final Map<SourceReference, Registration> bySource = new LinkedHashMap<>();
+     private final Map<LedgerTransactionId, LedgerTransactionId> reversalByOriginal = new LinkedHashMap<>();
++    private final PostingPolicyValidator policyValidator = new PostingPolicyValidator();
+     private final PostingCanonicalizer canonicalizer = new PostingCanonicalizer();
+-    private final LedgerTransactionFactory transactionFactory = new LedgerTransactionFactory(canonicalizer);
++    private final LedgerTransactionFactory transactionFactory = LedgerTransactionFactory.forKernel(
++            new Access(), canonicalizer);
+     private final LedgerBalanceCalculator balanceCalculator = new LedgerBalanceCalculator();
++    private final PlatformId platformId;
+     private final Clock clock;
+ 
+-    public LedgerKernel() {
+-        this(Clock.systemUTC());
++    public LedgerKernel(PlatformId platformId) {
++        this(platformId, Clock.systemUTC());
+     }
+ 
+-    public LedgerKernel(Clock clock) {
++    public LedgerKernel(PlatformId platformId, Clock clock) {
++        this.platformId = Objects.requireNonNull(platformId, "platformId");
+         this.clock = Objects.requireNonNull(clock, "clock");
+     }
+ 
+     public synchronized void registerAccount(LedgerAccount account) {
+         Objects.requireNonNull(account, "account");
++        if (account.scope().kind() == ScopeKind.PLATFORM
++                && !account.scope().ownerId().equals(platformId.value())) {
++            throw new InvalidLedgerAccountException(
++                    "platform-scoped account does not belong to this ledger kernel");
++        }
+         if (accounts.putIfAbsent(account.id(), account) != null) {
+             throw new DuplicateLedgerAccountException(account.id().toString());
+         }
+@@ -62,6 +85,7 @@ public final class LedgerKernel {
+ 
+     public synchronized PostingOutcome post(PostingCommand command) {
+         Objects.requireNonNull(command, "command");
++        var validatedCommand = policyValidator.validate(command);
+         PostingFingerprint fingerprint = canonicalizer.fingerprint(command);
+ 
+         Registration existingKey = byIdempotency.get(command.context().idempotencyKey());
+@@ -89,7 +113,7 @@ public final class LedgerKernel {
+ 
+         validateAccountsRegistered(command);
+         validateReversal(command);
+-        LedgerTransaction transaction = transactionFactory.create(command);
++        LedgerTransaction transaction = transactionFactory.create(validatedCommand);
+         Registration registration = new Registration(fingerprint, transaction.id());
+         transactions.put(transaction.id(), transaction);
+         byIdempotency.put(command.context().idempotencyKey(), registration);
+@@ -138,7 +162,9 @@ public final class LedgerKernel {
+     }
+ 
+     public List<LedgerAccountId> lockOrder(PostingCommand command) {
+-        Collection<LedgerAccountId> ids = command.lines().stream()
++        PostingCommand validated = policyValidator.validate(
++                Objects.requireNonNull(command, "command")).command();
++        Collection<LedgerAccountId> ids = validated.lines().stream()
+                 .map(line -> line.account().id())
+                 .toList();
+         return AccountLockOrder.sortedDistinct(ids);
+diff --git a/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/CapturePostingPolicy.java b/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/CapturePostingPolicy.java
+index bd58224..92903f0 100644
+--- a/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/CapturePostingPolicy.java
++++ b/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/CapturePostingPolicy.java
+@@ -3,6 +3,7 @@ package com.bikash.fintechsettlement.ledger.domain.policy;
+ import com.bikash.fintechsettlement.ledger.domain.account.LedgerAccount;
+ import com.bikash.fintechsettlement.ledger.domain.account.LedgerAccountRole;
+ import com.bikash.fintechsettlement.ledger.domain.error.InvalidPostingPolicyException;
++import com.bikash.fintechsettlement.ledger.domain.posting.FinancialEventType;
+ import com.bikash.fintechsettlement.ledger.domain.posting.PostingCommand;
+ import com.bikash.fintechsettlement.ledger.domain.posting.PostingContext;
+ import com.bikash.fintechsettlement.ledger.domain.posting.PostingLine;
+@@ -23,6 +24,7 @@ public final class CapturePostingPolicy {
+             LedgerAccount platformFeeRevenue,
+             Money gross,
+             Money fee) {
++        PostingPolicySupport.requireSourceType(context, FinancialEventType.PAYMENT_CAPTURE_CONFIRMED);
+         var merchantId = context.requireMerchant();
+         gross.requirePositive("gross");
+         fee.requireNonNegative("fee").requireAtMost(gross, "fee");
+diff --git a/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/PostingPolicySupport.java b/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/PostingPolicySupport.java
+index 12b2e0f..e52ee2a 100644
+--- a/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/PostingPolicySupport.java
++++ b/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/PostingPolicySupport.java
+@@ -4,6 +4,8 @@ import com.bikash.fintechsettlement.ledger.domain.account.LedgerAccount;
+ import com.bikash.fintechsettlement.ledger.domain.account.LedgerAccountRole;
+ import com.bikash.fintechsettlement.ledger.domain.error.InvalidPostingPolicyException;
+ import com.bikash.fintechsettlement.ledger.domain.identity.MerchantId;
++import com.bikash.fintechsettlement.ledger.domain.posting.FinancialEventType;
++import com.bikash.fintechsettlement.ledger.domain.posting.PostingContext;
+ import com.bikash.fintechsettlement.shared.money.Money;
+ 
+ import java.util.Currency;
+@@ -11,6 +13,14 @@ import java.util.Currency;
+ final class PostingPolicySupport {
+     private PostingPolicySupport() {}
+ 
++    static void requireSourceType(PostingContext context, FinancialEventType expected) {
++        FinancialEventType actual = context.source().type();
++        if (actual != expected) {
++            throw new InvalidPostingPolicyException(
++                    "expected source event type " + expected + " but received " + actual);
++        }
++    }
++
+     static void requireRole(LedgerAccount account, LedgerAccountRole expected) {
+         if (account.role() != expected) {
+             throw new InvalidPostingPolicyException(
+diff --git a/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/PostingPolicyValidator.java b/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/PostingPolicyValidator.java
+new file mode 100644
+index 0000000..05d05a7
+--- /dev/null
++++ b/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/PostingPolicyValidator.java
+@@ -0,0 +1,205 @@
++package com.bikash.fintechsettlement.ledger.domain.policy;
++
++import com.bikash.fintechsettlement.ledger.domain.account.LedgerAccountRole;
++import com.bikash.fintechsettlement.ledger.domain.error.InvalidPostingPolicyException;
++import com.bikash.fintechsettlement.ledger.domain.posting.FinancialEventType;
++import com.bikash.fintechsettlement.ledger.domain.posting.PostingCommand;
++import com.bikash.fintechsettlement.ledger.domain.posting.PostingPolicyReference;
++import com.bikash.fintechsettlement.ledger.domain.transaction.EntryDirection;
++
++import java.util.HashMap;
++import java.util.Map;
++import java.util.Objects;
++
++/**
++ * Authoritative posting-policy gate used by the ledger kernel.
++ *
++ * <p>Policy builders provide a convenient and safe construction API, but callers can deserialize or
++ * otherwise construct {@link PostingCommand} values directly. The kernel therefore revalidates the
++ * policy identity, source event type, reversal mode, and permitted account-role/direction shape
++ * before any idempotency registration or ledger mutation.</p>
++ */
++public final class PostingPolicyValidator {
++
++    public ValidatedPostingCommand validate(PostingCommand command) {
++        Objects.requireNonNull(command, "command");
++        PostingPolicyReference policy = command.policy();
++
++        if (policy.equals(CapturePostingPolicy.POLICY)) {
++            validateCapture(command);
++        } else if (policy.equals(RefundPostingPolicy.POLICY)) {
++            validateRefund(command);
++        } else if (policy.equals(SettlementPostingPolicy.POLICY)) {
++            validateSettlement(command);
++        } else if (policy.equals(ReservePostingPolicy.HOLD_POLICY)) {
++            validateReserveHold(command);
++        } else if (policy.equals(ReservePostingPolicy.RELEASE_POLICY)) {
++            validateReserveRelease(command);
++        } else if (policy.equals(ReversalPostingPolicy.POLICY)) {
++            validateReversal(command);
++        } else {
++            throw new InvalidPostingPolicyException(
++                    "unsupported posting policy " + policy.policyId() + " version " + policy.version());
++        }
++        return new ValidatedPostingCommand(command);
++    }
++
++    private static void validateCapture(PostingCommand command) {
++        requireStandard(command);
++        requireMerchant(command);
++        requireSourceType(command, FinancialEventType.PAYMENT_CAPTURE_CONFIRMED);
++        requireShape(command,
++                rule(LedgerAccountRole.PROCESSOR_CLEARING, EntryDirection.DEBIT, 1, 1),
++                rule(LedgerAccountRole.MERCHANT_PAYABLE, EntryDirection.CREDIT, 0, 1),
++                rule(LedgerAccountRole.PLATFORM_FEE_REVENUE, EntryDirection.CREDIT, 0, 1));
++        requireLineCount(command, 2, 3);
++    }
++
++    private static void validateRefund(PostingCommand command) {
++        requireStandard(command);
++        requireMerchant(command);
++        requireSourceType(command, FinancialEventType.PAYMENT_REFUND_CONFIRMED);
++        requireShape(command,
++                rule(LedgerAccountRole.PROCESSOR_CLEARING, EntryDirection.CREDIT, 1, 1),
++                rule(LedgerAccountRole.MERCHANT_PAYABLE, EntryDirection.DEBIT, 0, 1),
++                rule(LedgerAccountRole.MERCHANT_RECEIVABLE, EntryDirection.DEBIT, 0, 1),
++                rule(LedgerAccountRole.PLATFORM_FEE_REVENUE, EntryDirection.DEBIT, 0, 1));
++        requireLineCount(command, 2, 4);
++    }
++
++    private static void validateSettlement(PostingCommand command) {
++        requireStandard(command);
++        requireMerchant(command);
++        requireSourceType(command, FinancialEventType.SETTLEMENT_CONFIRMED);
++        requireShape(command,
++                rule(LedgerAccountRole.MERCHANT_PAYABLE, EntryDirection.DEBIT, 1, 1),
++                rule(LedgerAccountRole.SETTLEMENT_CASH, EntryDirection.CREDIT, 1, 1));
++        requireLineCount(command, 2, 2);
++    }
++
++    private static void validateReserveHold(PostingCommand command) {
++        requireStandard(command);
++        requireMerchant(command);
++        requireSourceType(command, FinancialEventType.RESERVE_HELD);
++        requireShape(command,
++                rule(LedgerAccountRole.MERCHANT_PAYABLE, EntryDirection.DEBIT, 1, 1),
++                rule(LedgerAccountRole.DISPUTE_RESERVE, EntryDirection.CREDIT, 1, 1));
++        requireLineCount(command, 2, 2);
++    }
++
++    private static void validateReserveRelease(PostingCommand command) {
++        requireStandard(command);
++        requireMerchant(command);
++        requireSourceType(command, FinancialEventType.RESERVE_RELEASED);
++        requireShape(command,
++                rule(LedgerAccountRole.DISPUTE_RESERVE, EntryDirection.DEBIT, 1, 1),
++                rule(LedgerAccountRole.MERCHANT_PAYABLE, EntryDirection.CREDIT, 1, 1));
++        requireLineCount(command, 2, 2);
++    }
++
++    private static void validateReversal(PostingCommand command) {
++        if (!command.isReversal()) {
++            throw new InvalidPostingPolicyException("reversal-v1 requires reversalOf");
++        }
++        FinancialEventType type = command.context().source().type();
++        if (type != FinancialEventType.REVERSAL_CONFIRMED
++                && type != FinancialEventType.MANUAL_ADJUSTMENT_APPROVED) {
++            throw new InvalidPostingPolicyException(
++                    "reversal-v1 does not accept source event type " + type);
++        }
++        // Current posting policies produce at most four entries. Bound forged reversal
++        // commands before canonicalization and exact-original comparison to prevent
++        // attacker-controlled oversized lists from consuming unbounded CPU/memory.
++        requireLineCount(command, 2, 4);
++    }
++
++    private static void requireMerchant(PostingCommand command) {
++        if (command.context().merchantId() == null) {
++            throw new InvalidPostingPolicyException(
++                    command.policy().policyId() + " requires merchantId");
++        }
++    }
++
++    private static void requireStandard(PostingCommand command) {
++        if (command.isReversal()) {
++            throw new InvalidPostingPolicyException(
++                    command.policy().policyId() + " cannot be used as a reversal policy");
++        }
++    }
++
++    private static void requireSourceType(PostingCommand command, FinancialEventType expected) {
++        FinancialEventType actual = command.context().source().type();
++        if (actual != expected) {
++            throw new InvalidPostingPolicyException(
++                    command.policy().policyId() + " requires source event type " + expected
++                            + " but received " + actual);
++        }
++    }
++
++    private static void requireLineCount(PostingCommand command, int minimum, int maximum) {
++        int count = command.lines().size();
++        if (count < minimum || count > maximum) {
++            throw new InvalidPostingPolicyException(
++                    command.policy().policyId() + " requires " + minimum
++                            + (minimum == maximum ? "" : "-" + maximum) + " entries");
++        }
++    }
++
++    private static void requireShape(PostingCommand command, LineRule... rules) {
++        Map<RoleDirection, Integer> counts = new HashMap<>();
++        Map<RoleDirection, LineRule> allowed = new HashMap<>();
++        for (LineRule rule : rules) {
++            allowed.put(rule.key(), rule);
++        }
++
++        for (var line : command.lines()) {
++            RoleDirection key = new RoleDirection(line.account().role(), line.direction());
++            if (!allowed.containsKey(key)) {
++                throw new InvalidPostingPolicyException(
++                        command.policy().policyId() + " does not permit "
++                                + key.role() + " " + key.direction());
++            }
++            counts.merge(key, 1, Integer::sum);
++        }
++
++        for (LineRule rule : rules) {
++            int count = counts.getOrDefault(rule.key(), 0);
++            if (count < rule.minimum() || count > rule.maximum()) {
++                throw new InvalidPostingPolicyException(
++                        command.policy().policyId() + " requires " + describe(rule));
++            }
++        }
++    }
++
++    private static String describe(LineRule rule) {
++        String amount = rule.minimum() == rule.maximum()
++                ? Integer.toString(rule.minimum())
++                : rule.minimum() + "-" + rule.maximum();
++        return amount + " " + rule.role() + " " + rule.direction() + " entries";
++    }
++
++    private static LineRule rule(
++            LedgerAccountRole role, EntryDirection direction, int minimum, int maximum) {
++        return new LineRule(role, direction, minimum, maximum);
++    }
++
++    private record RoleDirection(LedgerAccountRole role, EntryDirection direction) {}
++
++    private record LineRule(
++            LedgerAccountRole role,
++            EntryDirection direction,
++            int minimum,
++            int maximum) {
++        private LineRule {
++            Objects.requireNonNull(role, "role");
++            Objects.requireNonNull(direction, "direction");
++            if (minimum < 0 || maximum < minimum) {
++                throw new IllegalArgumentException("invalid posting policy line cardinality");
++            }
++        }
++
++        private RoleDirection key() {
++            return new RoleDirection(role, direction);
++        }
++    }
++}
+diff --git a/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/RefundPostingPolicy.java b/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/RefundPostingPolicy.java
+index 2a3b699..d95ed2c 100644
+--- a/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/RefundPostingPolicy.java
++++ b/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/RefundPostingPolicy.java
+@@ -2,6 +2,7 @@ package com.bikash.fintechsettlement.ledger.domain.policy;
+ 
+ import com.bikash.fintechsettlement.ledger.domain.account.LedgerAccount;
+ import com.bikash.fintechsettlement.ledger.domain.account.LedgerAccountRole;
++import com.bikash.fintechsettlement.ledger.domain.posting.FinancialEventType;
+ import com.bikash.fintechsettlement.ledger.domain.posting.PostingCommand;
+ import com.bikash.fintechsettlement.ledger.domain.posting.PostingContext;
+ import com.bikash.fintechsettlement.ledger.domain.posting.PostingLine;
+@@ -24,6 +25,7 @@ public final class RefundPostingPolicy {
+             Money totalRefund,
+             Money refundedFeeShare,
+             Money availablePayable) {
++        PostingPolicySupport.requireSourceType(context, FinancialEventType.PAYMENT_REFUND_CONFIRMED);
+         var merchantId = context.requireMerchant();
+         totalRefund.requirePositive("totalRefund");
+         refundedFeeShare.requireNonNegative("refundedFeeShare").requireAtMost(totalRefund, "refundedFeeShare");
+diff --git a/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/ReservePostingPolicy.java b/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/ReservePostingPolicy.java
+index 58b744b..03205f0 100644
+--- a/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/ReservePostingPolicy.java
++++ b/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/ReservePostingPolicy.java
+@@ -2,6 +2,7 @@ package com.bikash.fintechsettlement.ledger.domain.policy;
+ 
+ import com.bikash.fintechsettlement.ledger.domain.account.LedgerAccount;
+ import com.bikash.fintechsettlement.ledger.domain.account.LedgerAccountRole;
++import com.bikash.fintechsettlement.ledger.domain.posting.FinancialEventType;
+ import com.bikash.fintechsettlement.ledger.domain.posting.PostingCommand;
+ import com.bikash.fintechsettlement.ledger.domain.posting.PostingContext;
+ import com.bikash.fintechsettlement.ledger.domain.posting.PostingLine;
+@@ -20,6 +21,7 @@ public final class ReservePostingPolicy {
+             LedgerAccount merchantPayable,
+             LedgerAccount disputeReserve,
+             Money amount) {
++        PostingPolicySupport.requireSourceType(context, FinancialEventType.RESERVE_HELD);
+         validate(context, merchantPayable, disputeReserve, amount);
+         return PostingCommand.standard(context, HOLD_POLICY, List.of(
+                 new PostingLine(merchantPayable, EntryDirection.DEBIT, amount),
+@@ -31,6 +33,7 @@ public final class ReservePostingPolicy {
+             LedgerAccount merchantPayable,
+             LedgerAccount disputeReserve,
+             Money amount) {
++        PostingPolicySupport.requireSourceType(context, FinancialEventType.RESERVE_RELEASED);
+         validate(context, merchantPayable, disputeReserve, amount);
+         return PostingCommand.standard(context, RELEASE_POLICY, List.of(
+                 new PostingLine(disputeReserve, EntryDirection.DEBIT, amount),
+diff --git a/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/SettlementPostingPolicy.java b/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/SettlementPostingPolicy.java
+index c2c5f26..54e0959 100644
+--- a/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/SettlementPostingPolicy.java
++++ b/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/SettlementPostingPolicy.java
+@@ -2,6 +2,7 @@ package com.bikash.fintechsettlement.ledger.domain.policy;
+ 
+ import com.bikash.fintechsettlement.ledger.domain.account.LedgerAccount;
+ import com.bikash.fintechsettlement.ledger.domain.account.LedgerAccountRole;
++import com.bikash.fintechsettlement.ledger.domain.posting.FinancialEventType;
+ import com.bikash.fintechsettlement.ledger.domain.posting.PostingCommand;
+ import com.bikash.fintechsettlement.ledger.domain.posting.PostingContext;
+ import com.bikash.fintechsettlement.ledger.domain.posting.PostingLine;
+@@ -19,6 +20,7 @@ public final class SettlementPostingPolicy {
+             LedgerAccount merchantPayable,
+             LedgerAccount settlementCash,
+             Money payout) {
++        PostingPolicySupport.requireSourceType(context, FinancialEventType.SETTLEMENT_CONFIRMED);
+         var merchantId = context.requireMerchant();
+         payout.requirePositive("payout");
+         PostingPolicySupport.requireRole(merchantPayable, LedgerAccountRole.MERCHANT_PAYABLE);
+diff --git a/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/ValidatedPostingCommand.java b/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/ValidatedPostingCommand.java
+new file mode 100644
+index 0000000..b132892
+--- /dev/null
++++ b/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/policy/ValidatedPostingCommand.java
+@@ -0,0 +1,22 @@
++package com.bikash.fintechsettlement.ledger.domain.policy;
++
++import com.bikash.fintechsettlement.ledger.domain.posting.PostingCommand;
++
++import java.util.Objects;
++
++/**
++ * Opaque proof that a posting command passed the authoritative policy gate.
++ *
++ * <p>The constructor is package-private so only policy validation code can mint this proof.</p>
++ */
++public final class ValidatedPostingCommand {
++    private final PostingCommand command;
++
++    ValidatedPostingCommand(PostingCommand command) {
++        this.command = Objects.requireNonNull(command, "command");
++    }
++
++    public PostingCommand command() {
++        return command;
++    }
++}
+diff --git a/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/transaction/LedgerTransaction.java b/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/transaction/LedgerTransaction.java
+index b143bdf..45062b3 100644
+--- a/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/transaction/LedgerTransaction.java
++++ b/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/transaction/LedgerTransaction.java
+@@ -1,5 +1,6 @@
+ package com.bikash.fintechsettlement.ledger.domain.transaction;
+ 
++import com.bikash.fintechsettlement.ledger.domain.kernel.LedgerKernel;
+ import com.bikash.fintechsettlement.ledger.domain.posting.PostingContext;
+ import com.bikash.fintechsettlement.ledger.domain.posting.PostingPolicyReference;
+ import com.bikash.fintechsettlement.shared.money.Money;
+@@ -19,7 +20,7 @@ public final class LedgerTransaction {
+     private final LedgerTransactionId reversalOf;
+     private final String checksum;
+ 
+-    LedgerTransaction(
++    private LedgerTransaction(
+             LedgerTransactionId id,
+             PostingContext context,
+             PostingPolicyReference policy,
+@@ -40,6 +41,22 @@ public final class LedgerTransaction {
+         this.checksum = Objects.requireNonNull(checksum, "checksum");
+     }
+ 
++    static LedgerTransaction createForKernel(
++            LedgerKernel.Access access,
++            LedgerTransactionId id,
++            PostingContext context,
++            PostingPolicyReference policy,
++            Currency currency,
++            List<LedgerEntry> entries,
++            Money debitTotal,
++            Money creditTotal,
++            LedgerTransactionId reversalOf,
++            String checksum) {
++        Objects.requireNonNull(access, "access");
++        return new LedgerTransaction(
++                id, context, policy, currency, entries, debitTotal, creditTotal, reversalOf, checksum);
++    }
++
+     public LedgerTransactionId id() { return id; }
+     public PostingContext context() { return context; }
+     public PostingPolicyReference policy() { return policy; }
+diff --git a/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/transaction/LedgerTransactionFactory.java b/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/transaction/LedgerTransactionFactory.java
+index 00bc251..dff14ee 100644
+--- a/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/transaction/LedgerTransactionFactory.java
++++ b/applications/fintech-application/ledger-domain/src/main/java/com/bikash/fintechsettlement/ledger/domain/transaction/LedgerTransactionFactory.java
+@@ -6,15 +6,21 @@ import com.bikash.fintechsettlement.ledger.domain.error.LedgerAccountClosedExcep
+ import com.bikash.fintechsettlement.ledger.domain.error.LedgerArithmeticException;
+ import com.bikash.fintechsettlement.ledger.domain.error.ReversalNotAllowedException;
+ import com.bikash.fintechsettlement.ledger.domain.error.UnbalancedTransactionException;
++import com.bikash.fintechsettlement.ledger.domain.kernel.LedgerKernel;
+ import com.bikash.fintechsettlement.ledger.domain.posting.PostingCanonicalizer;
+ import com.bikash.fintechsettlement.ledger.domain.posting.PostingCommand;
+ import com.bikash.fintechsettlement.ledger.domain.posting.PostingLine;
++import com.bikash.fintechsettlement.ledger.domain.policy.ValidatedPostingCommand;
+ import com.bikash.fintechsettlement.shared.money.Money;
+ 
+ import java.util.ArrayList;
++import java.util.Objects;
+ import java.util.Comparator;
+ import java.util.Currency;
++import java.util.HashSet;
+ import java.util.List;
++import java.util.Set;
++import java.util.UUID;
+ 
+ public final class LedgerTransactionFactory {
+     private static final Comparator<PostingLine> ENTRY_ORDER = Comparator
+@@ -23,13 +29,26 @@ public final class LedgerTransactionFactory {
+             .thenComparingLong(line -> line.amount().amountMinor())
+             .thenComparing(line -> line.account().role().name());
+ 
++    private final LedgerKernel.Access access;
+     private final PostingCanonicalizer canonicalizer;
+ 
+-    public LedgerTransactionFactory(PostingCanonicalizer canonicalizer) {
+-        this.canonicalizer = canonicalizer;
++    private LedgerTransactionFactory(
++            LedgerKernel.Access access, PostingCanonicalizer canonicalizer) {
++        this.access = Objects.requireNonNull(access, "access");
++        this.canonicalizer = Objects.requireNonNull(canonicalizer, "canonicalizer");
+     }
+ 
+-    public LedgerTransaction create(PostingCommand command) {
++    /**
++     * Creates the factory only for the ledger kernel. The access capability cannot be
++     * constructed outside `LedgerKernel`, including by split-package code.
++     */
++    public static LedgerTransactionFactory forKernel(
++            LedgerKernel.Access access, PostingCanonicalizer canonicalizer) {
++        return new LedgerTransactionFactory(access, canonicalizer);
++    }
++
++    public LedgerTransaction create(ValidatedPostingCommand validatedCommand) {
++        PostingCommand command = Objects.requireNonNull(validatedCommand, "validatedCommand").command();
+         List<PostingLine> sorted = command.lines().stream().sorted(ENTRY_ORDER).toList();
+         if (sorted.size() < 2) {
+             throw new InvalidLedgerEntryException("a transaction requires at least two entries");
+@@ -44,6 +63,7 @@ public final class LedgerTransactionFactory {
+         boolean hasDebit = false;
+         boolean hasCredit = false;
+         List<LedgerEntry> entries = new ArrayList<>(sorted.size());
++        Set<UUID> platformOwners = new HashSet<>();
+         var merchantId = command.context().merchantId();
+ 
+         try {
+@@ -55,7 +75,9 @@ public final class LedgerTransactionFactory {
+                 if (!currency.equals(line.amount().currency())) {
+                     throw new InvalidLedgerEntryException("all entries must use the same currency");
+                 }
+-                if (line.account().scope().kind() == ScopeKind.MERCHANT) {
++                if (line.account().scope().kind() == ScopeKind.PLATFORM) {
++                    platformOwners.add(line.account().scope().ownerId());
++                } else if (line.account().scope().kind() == ScopeKind.MERCHANT) {
+                     if (merchantId == null || !line.account().scope().belongsTo(merchantId)) {
+                         throw new InvalidLedgerEntryException(
+                                 "merchant-scoped account does not belong to posting merchant");
+@@ -80,6 +102,11 @@ public final class LedgerTransactionFactory {
+             throw new LedgerArithmeticException("summing ledger entries", exception);
+         }
+ 
++        if (platformOwners.size() > 1) {
++            throw new InvalidLedgerEntryException(
++                    "platform-scoped accounts must share one platform owner");
++        }
++
+         if (!hasDebit || !hasCredit) {
+             throw new InvalidLedgerEntryException("a transaction requires at least one debit and one credit");
+         }
+@@ -93,7 +120,8 @@ public final class LedgerTransactionFactory {
+                 + command.context().recordedAt() + "|" + canonicalizer.canonicalForm(command);
+         String checksum = PostingCanonicalizer.sha256Hex(checksumInput);
+ 
+-        return new LedgerTransaction(
++        return LedgerTransaction.createForKernel(
++                access,
+                 command.context().transactionId(),
+                 command.context(),
+                 command.policy(),
+diff --git a/libraries/identity/pom.xml b/libraries/identity/pom.xml
+index e2d43b3..8a74ccb 100644
+--- a/libraries/identity/pom.xml
++++ b/libraries/identity/pom.xml
+@@ -6,7 +6,7 @@
+     <parent>
+         <groupId>com.bikash.fintechsettlement</groupId>
+         <artifactId>fintech-settlement-engine</artifactId>
+-        <version>0.3.0</version>
++        <version>0.3.1</version>
+         <relativePath>../../pom.xml</relativePath>
+     </parent>
+     <artifactId>identity</artifactId>
+diff --git a/libraries/money/pom.xml b/libraries/money/pom.xml
+index 0b6baf1..a1b6a02 100644
+--- a/libraries/money/pom.xml
++++ b/libraries/money/pom.xml
+@@ -6,7 +6,7 @@
+     <parent>
+         <groupId>com.bikash.fintechsettlement</groupId>
+         <artifactId>fintech-settlement-engine</artifactId>
+-        <version>0.3.0</version>
++        <version>0.3.1</version>
+         <relativePath>../../pom.xml</relativePath>
+     </parent>
+     <artifactId>money</artifactId>
+diff --git a/tests/domain-tests/ledger/pom.xml b/tests/domain-tests/ledger/pom.xml
+index fba1f2e..ac2ade2 100644
+--- a/tests/domain-tests/ledger/pom.xml
++++ b/tests/domain-tests/ledger/pom.xml
+@@ -6,7 +6,7 @@
+     <parent>
+         <groupId>com.bikash.fintechsettlement</groupId>
+         <artifactId>fintech-settlement-engine</artifactId>
+-        <version>0.3.0</version>
++        <version>0.3.1</version>
+         <relativePath>../../../pom.xml</relativePath>
+     </parent>
+     <artifactId>ledger-domain-tests</artifactId>
+diff --git a/tests/domain-tests/ledger/src/test/java/com/bikash/fintechsettlement/ledger/LedgerFixture.java b/tests/domain-tests/ledger/src/test/java/com/bikash/fintechsettlement/ledger/LedgerFixture.java
+index a7d2737..ac73437 100644
+--- a/tests/domain-tests/ledger/src/test/java/com/bikash/fintechsettlement/ledger/LedgerFixture.java
++++ b/tests/domain-tests/ledger/src/test/java/com/bikash/fintechsettlement/ledger/LedgerFixture.java
+@@ -3,6 +3,7 @@ package com.bikash.fintechsettlement.ledger;
+ import com.bikash.fintechsettlement.ledger.domain.account.*;
+ import com.bikash.fintechsettlement.ledger.domain.identity.CorrelationId;
+ import com.bikash.fintechsettlement.ledger.domain.identity.MerchantId;
++import com.bikash.fintechsettlement.ledger.domain.identity.PlatformId;
+ import com.bikash.fintechsettlement.ledger.domain.posting.*;
+ import com.bikash.fintechsettlement.ledger.domain.transaction.LedgerTransactionId;
+ 
+@@ -13,6 +14,7 @@ import java.util.UUID;
+ final class LedgerFixture {
+     static final Currency USD = Currency.getInstance("USD");
+     static final UUID PLATFORM = UUID.fromString("00000000-0000-7000-8000-000000000001");
++    static final PlatformId PLATFORM_ID = new PlatformId(PLATFORM);
+     static final MerchantId MERCHANT = new MerchantId(UUID.fromString("00000000-0000-7000-8000-000000000002"));
+     static final Instant TIME = Instant.parse("2026-07-26T00:00:00Z");
+ 
+diff --git a/tests/domain-tests/ledger/src/test/java/com/bikash/fintechsettlement/ledger/LedgerKernelTest.java b/tests/domain-tests/ledger/src/test/java/com/bikash/fintechsettlement/ledger/LedgerKernelTest.java
+index 0bf3ebb..07c72a0 100644
+--- a/tests/domain-tests/ledger/src/test/java/com/bikash/fintechsettlement/ledger/LedgerKernelTest.java
++++ b/tests/domain-tests/ledger/src/test/java/com/bikash/fintechsettlement/ledger/LedgerKernelTest.java
+@@ -23,7 +23,7 @@ class LedgerKernelTest {
+ 
+     @BeforeEach
+     void setUp() {
+-        kernel = new LedgerKernel();
++        kernel = new LedgerKernel(PLATFORM_ID);
+         for (var account : new com.bikash.fintechsettlement.ledger.domain.account.LedgerAccount[]{PROCESSOR, CASH, PAYABLE, RECEIVABLE, FEE, RESERVE}) {
+             kernel.registerAccount(account);
+         }
+diff --git a/tests/domain-tests/ledger/src/test/java/com/bikash/fintechsettlement/ledger/LedgerPropertyTest.java b/tests/domain-tests/ledger/src/test/java/com/bikash/fintechsettlement/ledger/LedgerPropertyTest.java
+index 11d25c5..c259b26 100644
+--- a/tests/domain-tests/ledger/src/test/java/com/bikash/fintechsettlement/ledger/LedgerPropertyTest.java
++++ b/tests/domain-tests/ledger/src/test/java/com/bikash/fintechsettlement/ledger/LedgerPropertyTest.java
+@@ -17,7 +17,7 @@ class LedgerPropertyTest {
+             @ForAll @LongRange(min = 1, max = 10_000_000) long gross,
+             @ForAll @LongRange(min = 0, max = 10_000) long requestedFee) {
+         long fee = Math.min(gross, requestedFee);
+-        LedgerKernel kernel = new LedgerKernel();
++        LedgerKernel kernel = new LedgerKernel(PLATFORM_ID);
+         kernel.registerAccount(PROCESSOR);
+         kernel.registerAccount(PAYABLE);
+         kernel.registerAccount(FEE);
+diff --git a/tests/domain-tests/ledger/src/test/java/com/bikash/fintechsettlement/ledger/PostingPolicySecurityTest.java b/tests/domain-tests/ledger/src/test/java/com/bikash/fintechsettlement/ledger/PostingPolicySecurityTest.java
+new file mode 100644
+index 0000000..f05c367
+--- /dev/null
++++ b/tests/domain-tests/ledger/src/test/java/com/bikash/fintechsettlement/ledger/PostingPolicySecurityTest.java
+@@ -0,0 +1,122 @@
++package com.bikash.fintechsettlement.ledger;
++
++import com.bikash.fintechsettlement.ledger.domain.account.AccountScope;
++import com.bikash.fintechsettlement.ledger.domain.account.LedgerAccount;
++import com.bikash.fintechsettlement.ledger.domain.account.LedgerAccountId;
++import com.bikash.fintechsettlement.ledger.domain.account.LedgerAccountRole;
++import com.bikash.fintechsettlement.ledger.domain.account.LedgerAccountStatus;
++import com.bikash.fintechsettlement.ledger.domain.error.InvalidLedgerAccountException;
++import com.bikash.fintechsettlement.ledger.domain.error.InvalidLedgerEntryException;
++import com.bikash.fintechsettlement.ledger.domain.error.InvalidPostingPolicyException;
++import com.bikash.fintechsettlement.ledger.domain.kernel.LedgerKernel;
++import com.bikash.fintechsettlement.ledger.domain.policy.CapturePostingPolicy;
++import com.bikash.fintechsettlement.ledger.domain.policy.RefundPostingPolicy;
++import com.bikash.fintechsettlement.ledger.domain.policy.ReversalPostingPolicy;
++import com.bikash.fintechsettlement.ledger.domain.policy.ReservePostingPolicy;
++import com.bikash.fintechsettlement.ledger.domain.policy.SettlementPostingPolicy;
++import com.bikash.fintechsettlement.ledger.domain.posting.FinancialEventType;
++import com.bikash.fintechsettlement.ledger.domain.posting.PostingCommand;
++import com.bikash.fintechsettlement.ledger.domain.posting.PostingLine;
++import com.bikash.fintechsettlement.ledger.domain.transaction.EntryDirection;
++import com.bikash.fintechsettlement.shared.money.Money;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++
++import java.util.List;
++import java.util.UUID;
++
++import static com.bikash.fintechsettlement.ledger.LedgerFixture.*;
++import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertThrows;
++
++class PostingPolicySecurityTest {
++    private LedgerKernel kernel;
++
++    @BeforeEach
++    void setUp() {
++        kernel = new LedgerKernel(PLATFORM_ID);
++        for (var account : new LedgerAccount[]{PROCESSOR, CASH, PAYABLE, RECEIVABLE, FEE, RESERVE}) {
++            kernel.registerAccount(account);
++        }
++    }
++
++    @Test
++    void kernelRejectsCallerForgedCapturePolicyShape() {
++        PostingCommand forged = PostingCommand.standard(
++                context(101, "forged-capture", FinancialEventType.PAYMENT_CAPTURE_CONFIRMED),
++                CapturePostingPolicy.POLICY,
++                List.of(
++                        new PostingLine(CASH, EntryDirection.DEBIT, new Money(1_000, USD)),
++                        new PostingLine(PAYABLE, EntryDirection.CREDIT, new Money(1_000, USD))));
++
++        assertThrows(InvalidPostingPolicyException.class, () -> kernel.post(forged));
++        assertEquals(0, kernel.transactionCount());
++    }
++
++    @Test
++    void buildersRejectMismatchedSourceEventTypes() {
++        assertThrows(InvalidPostingPolicyException.class, () -> new CapturePostingPolicy().create(
++                context(102, "wrong-capture-source", FinancialEventType.SETTLEMENT_CONFIRMED),
++                PROCESSOR, PAYABLE, FEE, new Money(1_000, USD), new Money(100, USD)));
++
++        assertThrows(InvalidPostingPolicyException.class, () -> new RefundPostingPolicy().create(
++                context(103, "wrong-refund-source", FinancialEventType.PAYMENT_CAPTURE_CONFIRMED),
++                PAYABLE, RECEIVABLE, FEE, PROCESSOR,
++                new Money(500, USD), new Money(10, USD), new Money(490, USD)));
++
++        assertThrows(InvalidPostingPolicyException.class, () -> new SettlementPostingPolicy().create(
++                context(104, "wrong-settlement-source", FinancialEventType.RESERVE_HELD),
++                PAYABLE, CASH, new Money(500, USD)));
++
++        ReservePostingPolicy reserve = new ReservePostingPolicy();
++        assertThrows(InvalidPostingPolicyException.class, () -> reserve.hold(
++                context(105, "wrong-reserve-source", FinancialEventType.RESERVE_RELEASED),
++                PAYABLE, RESERVE, new Money(100, USD)));
++    }
++
++    @Test
++    void transactionRejectsDifferentPlatformOwners() {
++        LedgerAccount foreignFee = new LedgerAccount(
++                new LedgerAccountId(UUID.fromString("00000000-0000-7000-8000-000000000901")),
++                LedgerAccountRole.PLATFORM_FEE_REVENUE,
++                AccountScope.platform(UUID.fromString("00000000-0000-7000-8000-000000000999")),
++                USD,
++                LedgerAccountStatus.ACTIVE);
++        assertThrows(InvalidLedgerAccountException.class, () -> kernel.registerAccount(foreignFee));
++        assertEquals(0, kernel.transactionCount());
++    }
++    @Test
++    void kernelRejectsDirectCommandWithMismatchedSourceType() {
++        PostingCommand forged = PostingCommand.standard(
++                context(107, "direct-wrong-source", FinancialEventType.SETTLEMENT_CONFIRMED),
++                CapturePostingPolicy.POLICY,
++                List.of(
++                        new PostingLine(PROCESSOR, EntryDirection.DEBIT, new Money(1_000, USD)),
++                        new PostingLine(PAYABLE, EntryDirection.CREDIT, new Money(900, USD)),
++                        new PostingLine(FEE, EntryDirection.CREDIT, new Money(100, USD))));
++
++        assertThrows(InvalidPostingPolicyException.class, () -> kernel.post(forged));
++        assertEquals(0, kernel.transactionCount());
++    }
++
++    @Test
++    void kernelRejectsOversizedForgedReversalBeforeCanonicalization() {
++        var original = kernel.post(new CapturePostingPolicy().create(
++                context(108, "reversal-original", FinancialEventType.PAYMENT_CAPTURE_CONFIRMED),
++                PROCESSOR, PAYABLE, FEE, new Money(1_000, USD), new Money(100, USD))).transaction();
++        PostingCommand forged = PostingCommand.reversal(
++                context(109, "oversized-reversal", FinancialEventType.REVERSAL_CONFIRMED),
++                ReversalPostingPolicy.POLICY,
++                List.of(
++                        new PostingLine(PROCESSOR, EntryDirection.CREDIT, new Money(200, USD)),
++                        new PostingLine(PROCESSOR, EntryDirection.CREDIT, new Money(200, USD)),
++                        new PostingLine(PAYABLE, EntryDirection.DEBIT, new Money(200, USD)),
++                        new PostingLine(PAYABLE, EntryDirection.DEBIT, new Money(200, USD)),
++                        new PostingLine(FEE, EntryDirection.DEBIT, new Money(200, USD))),
++                original.id());
++
++        assertThrows(InvalidPostingPolicyException.class, () -> kernel.post(forged));
++        assertEquals(1, kernel.transactionCount());
++    }
++
++}
+diff --git a/tests/selftest/src/main/java/com/bikash/fintechsettlement/selftest/Batch1SelfTest.java b/tests/selftest/src/main/java/com/bikash/fintechsettlement/selftest/Batch1SelfTest.java
+index a01a9d3..65086c4 100644
+--- a/tests/selftest/src/main/java/com/bikash/fintechsettlement/selftest/Batch1SelfTest.java
++++ b/tests/selftest/src/main/java/com/bikash/fintechsettlement/selftest/Batch1SelfTest.java
+@@ -4,6 +4,7 @@ import com.bikash.fintechsettlement.ledger.domain.account.*;
+ import com.bikash.fintechsettlement.ledger.domain.error.*;
+ import com.bikash.fintechsettlement.ledger.domain.identity.CorrelationId;
+ import com.bikash.fintechsettlement.ledger.domain.identity.MerchantId;
++import com.bikash.fintechsettlement.ledger.domain.identity.PlatformId;
+ import com.bikash.fintechsettlement.ledger.domain.kernel.AccountLockOrder;
+ import com.bikash.fintechsettlement.ledger.domain.kernel.LedgerKernel;
+ import com.bikash.fintechsettlement.ledger.domain.policy.*;
+@@ -49,6 +50,10 @@ public final class Batch1SelfTest {
+         test("account role scope", this::accountRoleScope);
+         test("capture posting", this::capturePosting);
+         test("zero-fee capture", this::zeroFeeCapture);
++        test("forged policy command rejected", this::forgedPolicyCommandRejected);
++        test("wrong source event type rejected", this::wrongSourceEventTypeRejected);
++        test("oversized forged reversal rejected", this::oversizedForgedReversalRejected);
++        test("mixed platform owners rejected", this::mixedPlatformOwnersRejected);
+         test("unbalanced rejected", this::unbalancedRejected);
+         test("one-sided rejected", this::oneSidedRejected);
+         test("deterministic entry order", this::deterministicEntryOrder);
+@@ -127,42 +132,100 @@ public final class Batch1SelfTest {
+         check(tx.entries().size() == 2, "zero fee omits zero entry");
+     }
+ 
++
++    private void forgedPolicyCommandRejected() {
++        LedgerKernel kernel = kernel();
++        PostingCommand forged = PostingCommand.standard(
++                context(2_001, "forged-policy", FinancialEventType.PAYMENT_CAPTURE_CONFIRMED),
++                CapturePostingPolicy.POLICY,
++                List.of(
++                        new PostingLine(CASH, EntryDirection.DEBIT, money(1_000)),
++                        new PostingLine(PAYABLE, EntryDirection.CREDIT, money(1_000))));
++        expect(InvalidPostingPolicyException.class, () -> kernel.post(forged));
++        check(kernel.transactionCount() == 0, "forged policy creates no transaction");
++    }
++
++    private void wrongSourceEventTypeRejected() {
++        expect(InvalidPostingPolicyException.class, () -> new CapturePostingPolicy().create(
++                context(2_002, "wrong-source", FinancialEventType.SETTLEMENT_CONFIRMED),
++                PROCESSOR, PAYABLE, FEE, money(1_000), money(100)));
++
++        LedgerKernel kernel = kernel();
++        PostingCommand direct = PostingCommand.standard(
++                context(2_004, "wrong-source-direct", FinancialEventType.SETTLEMENT_CONFIRMED),
++                CapturePostingPolicy.POLICY,
++                List.of(
++                        new PostingLine(PROCESSOR, EntryDirection.DEBIT, money(1_000)),
++                        new PostingLine(PAYABLE, EntryDirection.CREDIT, money(900)),
++                        new PostingLine(FEE, EntryDirection.CREDIT, money(100))));
++        expect(InvalidPostingPolicyException.class, () -> kernel.post(direct));
++        check(kernel.transactionCount() == 0, "wrong source direct command creates no transaction");
++    }
++
++    private void oversizedForgedReversalRejected() {
++        LedgerKernel kernel = kernel();
++        LedgerTransaction original = kernel.post(capture(2_005, "oversized-original", 1_000, 100)).transaction();
++        PostingCommand forged = PostingCommand.reversal(
++                context(2_006, "oversized-reversal", FinancialEventType.REVERSAL_CONFIRMED),
++                ReversalPostingPolicy.POLICY,
++                List.of(
++                        new PostingLine(PROCESSOR, EntryDirection.CREDIT, money(200)),
++                        new PostingLine(PROCESSOR, EntryDirection.CREDIT, money(200)),
++                        new PostingLine(PAYABLE, EntryDirection.DEBIT, money(200)),
++                        new PostingLine(PAYABLE, EntryDirection.DEBIT, money(200)),
++                        new PostingLine(FEE, EntryDirection.DEBIT, money(200))),
++                original.id());
++        expect(InvalidPostingPolicyException.class, () -> kernel.post(forged));
++        check(kernel.transactionCount() == 1, "oversized reversal creates no transaction");
++    }
++
++    private void mixedPlatformOwnersRejected() {
++        LedgerKernel kernel = kernel();
++        LedgerAccount foreignFee = account(
++                2_003,
++                LedgerAccountRole.PLATFORM_FEE_REVENUE,
++                AccountScope.platform(uuid(9_999)),
++                USD);
++        expect(InvalidLedgerAccountException.class, () -> kernel.registerAccount(foreignFee));
++        check(kernel.transactionCount() == 0, "foreign platform account is not registered");
++    }
++
+     private void unbalancedRejected() {
+         LedgerKernel kernel = kernel();
+-        PostingContext context = context(3, "bad-balance", FinancialEventType.MANUAL_ADJUSTMENT_APPROVED);
+-        PostingCommand command = PostingCommand.standard(context, new PostingPolicyReference("manual-v1", 1), List.of(
+-                new PostingLine(PROCESSOR, EntryDirection.DEBIT, money(100)),
+-                new PostingLine(PAYABLE, EntryDirection.CREDIT, money(99))));
++        PostingCommand command = PostingCommand.standard(
++                context(3, "bad-balance", FinancialEventType.PAYMENT_CAPTURE_CONFIRMED),
++                CapturePostingPolicy.POLICY,
++                List.of(
++                        new PostingLine(PROCESSOR, EntryDirection.DEBIT, money(100)),
++                        new PostingLine(PAYABLE, EntryDirection.CREDIT, money(99))));
+         expect(UnbalancedTransactionException.class, () -> kernel.post(command));
+-        check(kernel.transactionCount() == 0, "unbalanced creates no transaction");
++        check(kernel.transactionCount() == 0, "unbalanced command creates no transaction");
+     }
+ 
+     private void oneSidedRejected() {
+         LedgerKernel kernel = kernel();
+         PostingCommand command = PostingCommand.standard(
+-                context(4, "one-sided", FinancialEventType.MANUAL_ADJUSTMENT_APPROVED),
+-                new PostingPolicyReference("manual-v1", 1),
++                context(4, "one-sided", FinancialEventType.PAYMENT_CAPTURE_CONFIRMED),
++                CapturePostingPolicy.POLICY,
+                 List.of(
+                         new PostingLine(PROCESSOR, EntryDirection.DEBIT, money(50)),
+                         new PostingLine(CASH, EntryDirection.DEBIT, money(50))));
+-        expect(InvalidLedgerEntryException.class, () -> kernel.post(command));
++        expect(InvalidPostingPolicyException.class, () -> kernel.post(command));
++        check(kernel.transactionCount() == 0, "one-sided command creates no transaction");
+     }
+ 
+     private void deterministicEntryOrder() {
+-        LedgerKernel left = kernel();
+-        LedgerKernel right = kernel();
+-        PostingContext c1 = context(5, "order-a", FinancialEventType.MANUAL_ADJUSTMENT_APPROVED);
+-        PostingContext c2 = context(6, "order-b", FinancialEventType.MANUAL_ADJUSTMENT_APPROVED);
+-        SourceReference sameSource = c1.source();
+-        c2 = new PostingContext(c2.transactionId(), c2.idempotencyKey(), sameSource, c2.correlationId(), c2.merchantId(), c2.occurredAt(), c2.recordedAt(), c2.reason());
+-        var policy = new PostingPolicyReference("manual-v1", 1);
++        LedgerKernel firstKernel = kernel();
++        LedgerKernel secondKernel = kernel();
++        PostingContext c1 = context(5, "order-a", FinancialEventType.PAYMENT_CAPTURE_CONFIRMED);
++        PostingContext c2 = context(6, "order-b", FinancialEventType.PAYMENT_CAPTURE_CONFIRMED);
+         var linesA = List.of(
+                 new PostingLine(FEE, EntryDirection.CREDIT, money(10)),
+                 new PostingLine(PROCESSOR, EntryDirection.DEBIT, money(100)),
+                 new PostingLine(PAYABLE, EntryDirection.CREDIT, money(90)));
+         var linesB = List.of(linesA.get(1), linesA.get(2), linesA.get(0));
+-        var a = left.post(PostingCommand.standard(c1, policy, linesA)).transaction();
+-        var b = right.post(PostingCommand.standard(c2, policy, linesB)).transaction();
++        var a = firstKernel.post(PostingCommand.standard(c1, CapturePostingPolicy.POLICY, linesA)).transaction();
++        var b = secondKernel.post(PostingCommand.standard(c2, CapturePostingPolicy.POLICY, linesB)).transaction();
+         check(a.entries().stream().map(LedgerEntry::accountId).toList()
+                 .equals(b.entries().stream().map(LedgerEntry::accountId).toList()), "canonical order");
+     }
+@@ -315,25 +378,20 @@ public final class Batch1SelfTest {
+     private void unknownAccountRejected() {
+         LedgerKernel kernel = kernel();
+         LedgerAccount unknown = account(999, LedgerAccountRole.PROCESSOR_CLEARING, AccountScope.platform(PLATFORM_ID), USD);
+-        PostingCommand command = PostingCommand.standard(
+-                context(28, "unknown", FinancialEventType.MANUAL_ADJUSTMENT_APPROVED),
+-                new PostingPolicyReference("manual-v1", 1),
+-                List.of(new PostingLine(unknown, EntryDirection.DEBIT, money(100)),
+-                        new PostingLine(PAYABLE, EntryDirection.CREDIT, money(100))));
++        PostingCommand command = new CapturePostingPolicy().create(
++                context(28, "unknown", FinancialEventType.PAYMENT_CAPTURE_CONFIRMED),
++                unknown, PAYABLE, FEE, money(100), money(0));
+         expect(UnknownLedgerAccountException.class, () -> kernel.post(command));
+     }
+ 
+     private void closedAccountRejected() {
+         LedgerKernel kernel = kernel();
+-        LedgerAccount closed = new LedgerAccount(PROCESSOR.id(), PROCESSOR.role(), PROCESSOR.scope(), USD, LedgerAccountStatus.CLOSED);
+-        // Register a separate closed account ID to preserve immutable account definition.
+-        closed = new LedgerAccount(new LedgerAccountId(uuid(888)), PROCESSOR.role(), PROCESSOR.scope(), USD, LedgerAccountStatus.CLOSED);
++        LedgerAccount closed = new LedgerAccount(
++                new LedgerAccountId(uuid(888)), PROCESSOR.role(), PROCESSOR.scope(), USD, LedgerAccountStatus.CLOSED);
+         kernel.registerAccount(closed);
+-        PostingCommand command = PostingCommand.standard(
+-                context(29, "closed", FinancialEventType.MANUAL_ADJUSTMENT_APPROVED),
+-                new PostingPolicyReference("manual-v1", 1),
+-                List.of(new PostingLine(closed, EntryDirection.DEBIT, money(100)),
+-                        new PostingLine(PAYABLE, EntryDirection.CREDIT, money(100))));
++        PostingCommand command = new CapturePostingPolicy().create(
++                context(29, "closed", FinancialEventType.PAYMENT_CAPTURE_CONFIRMED),
++                closed, PAYABLE, FEE, money(100), money(0));
+         expect(LedgerAccountClosedException.class, () -> kernel.post(command));
+     }
+ 
+@@ -358,7 +416,7 @@ public final class Batch1SelfTest {
+     }
+ 
+     private LedgerKernel kernel() {
+-        LedgerKernel kernel = new LedgerKernel(Clock.fixed(TIME, ZoneOffset.UTC));
++        LedgerKernel kernel = new LedgerKernel(new PlatformId(PLATFORM_ID), Clock.fixed(TIME, ZoneOffset.UTC));
+         for (LedgerAccount account : List.of(PROCESSOR, CASH, PAYABLE, RECEIVABLE, FEE, RESERVE)) {
+             kernel.registerAccount(account);
+         }
+diff --git a/scripts/validate_batch1.py b/scripts/validate_batch1.py
+index d048475..22945eb 100755
+--- a/scripts/validate_batch1.py
++++ b/scripts/validate_batch1.py
+@@ -44,6 +44,8 @@ required = [
+     root / 'docs/batch1/deferred-work.md',
+     root / 'SECURITY.md',
+     root / 'CONTRIBUTING.md',
++    root / 'docs/security-review/codex-security-review.md',
++    root / 'docs/security-review/validation-and-rating.md',
+ ]
+ for path in required:
+     if not path.exists():
+@@ -56,6 +58,8 @@ for pom in sorted(root.rglob('pom.xml')):
+         errors.append(f'invalid XML in {pom.relative_to(root)}: {exception}')
+ 
+ root_pom = (root / 'pom.xml').read_text(encoding='utf-8')
++if '<version>0.3.1</version>' not in root_pom:
++    errors.append('root POM is not version 0.3.1')
+ for expected in ('<maven.compiler.release>25</maven.compiler.release>',
+                  '<junit.version>5.14.4</junit.version>',
+                  '<jqwik.version>1.9.3</jqwik.version>',
+@@ -66,6 +70,33 @@ for expected in ('<maven.compiler.release>25</maven.compiler.release>',
+ if '1.10.1' in root_pom or '1.10.1' in (root / 'README.md').read_text(encoding='utf-8'):
+     errors.append('jqwik 1.10.1 must not be pinned in this AI-assisted project')
+ 
++
++# Security boundary assertions. These are intentionally source-level companions to the
++# executable and negative-compilation gates in verify-batch1.sh.
++security_expectations = {
++    ledger / 'com/bikash/fintechsettlement/ledger/domain/policy/PostingPolicyValidator.java':
++        ('PAYMENT_CAPTURE_CONFIRMED', 'PAYMENT_REFUND_CONFIRMED', 'SETTLEMENT_CONFIRMED'),
++    ledger / 'com/bikash/fintechsettlement/ledger/domain/kernel/LedgerKernel.java':
++        ('public static final class Access', 'private Access()', 'policyValidator.validate(command)',
++         'LedgerKernel(PlatformId platformId'),
++    ledger / 'com/bikash/fintechsettlement/ledger/domain/transaction/LedgerTransaction.java':
++        ('private LedgerTransaction(', 'createForKernel('),
++    ledger / 'com/bikash/fintechsettlement/ledger/domain/transaction/LedgerTransactionFactory.java':
++        ('LedgerKernel.Access access', 'ValidatedPostingCommand validatedCommand'),
++}
++for path, fragments in security_expectations.items():
++    if not path.exists():
++        errors.append(f'missing security control {path.relative_to(root)}')
++        continue
++    text = path.read_text(encoding='utf-8')
++    for fragment in fragments:
++        if fragment not in text:
++            errors.append(f'{path.relative_to(root)} missing security boundary fragment {fragment!r}')
++
++legacy_access = ledger / 'com/bikash/fintechsettlement/ledger/domain/kernel/LedgerKernelAccess.java'
++if legacy_access.exists():
++    errors.append('legacy forgeable LedgerKernelAccess class must not exist')
++
+ if errors:
+     print('STATIC VALIDATION FAILED')
+     for error in errors:
+diff --git a/scripts/validate_manifest.py b/scripts/validate_manifest.py
+index 0974aec..dfd7459 100755
+--- a/scripts/validate_manifest.py
++++ b/scripts/validate_manifest.py
+@@ -30,7 +30,7 @@ for rel, sha in expected.items():
+ actual_files = {
+     str(path.relative_to(root))
+     for path in root.rglob('*')
+-    if path.is_file() and 'build' not in path.parts and path.name != 'MANIFEST.md'
++    if path.is_file() and not ({'build', '.codex'} & set(path.parts)) and path.name != 'MANIFEST.md'
+ }
+ missing_from_manifest = sorted(actual_files - set(expected))
+ extra_in_manifest = sorted(set(expected) - actual_files)
+diff --git a/scripts/verify-batch1.sh b/scripts/verify-batch1.sh
+index 11ca7ea..3a6ccb7 100755
+--- a/scripts/verify-batch1.sh
++++ b/scripts/verify-batch1.sh
+@@ -19,6 +19,70 @@ javac --release 21 -Xlint:all,-serial -Werror -cp "$BUILD/money:$BUILD/identity:
+ java -ea -cp "$BUILD/money:$BUILD/identity:$BUILD/ledger:$BUILD/selftest" \
+   com.bikash.fintechsettlement.selftest.Batch1SelfTest | tee "$BUILD/selftest-output.txt"
+ 
++# Prove application and split-package code cannot bypass LedgerKernel by directly
++# constructing the transaction factory, minting the kernel capability, or invoking
++# the private LedgerTransaction constructor.
++NEGATIVE_SRC="$BUILD/negative-compile-src"
++NEGATIVE_OUT="$BUILD/negative-compile"
++mkdir -p \
++  "$NEGATIVE_SRC/default" \
++  "$NEGATIVE_SRC/com/bikash/fintechsettlement/ledger/domain/kernel" \
++  "$NEGATIVE_SRC/com/bikash/fintechsettlement/ledger/domain/transaction" \
++  "$NEGATIVE_OUT"
++
++cat > "$NEGATIVE_SRC/default/FactoryBypassProbe.java" <<'JAVA'
++import com.bikash.fintechsettlement.ledger.domain.kernel.LedgerKernel;
++import com.bikash.fintechsettlement.ledger.domain.posting.PostingCanonicalizer;
++import com.bikash.fintechsettlement.ledger.domain.transaction.LedgerTransactionFactory;
++final class FactoryBypassProbe {
++  LedgerTransactionFactory direct = LedgerTransactionFactory.forKernel(
++      new LedgerKernel.Access(), new PostingCanonicalizer());
++}
++JAVA
++
++cat > "$NEGATIVE_SRC/com/bikash/fintechsettlement/ledger/domain/kernel/KernelPackageSpoofProbe.java" <<'JAVA'
++package com.bikash.fintechsettlement.ledger.domain.kernel;
++final class KernelPackageSpoofProbe {
++  LedgerKernel.Access access = new LedgerKernel.Access();
++}
++JAVA
++
++cat > "$NEGATIVE_SRC/com/bikash/fintechsettlement/ledger/domain/transaction/TransactionPackageSpoofProbe.java" <<'JAVA'
++package com.bikash.fintechsettlement.ledger.domain.transaction;
++final class TransactionPackageSpoofProbe {
++  LedgerTransaction transaction = new LedgerTransaction(
++      null, null, null, null, null, null, null, null, null);
++}
++JAVA
++
++expect_access_compile_failure() {
++  local source="$1"
++  local log="$2"
++  if javac --release 21 -cp "$BUILD/money:$BUILD/identity:$BUILD/ledger" \
++      -d "$NEGATIVE_OUT" "$source" >"$log" 2>&1; then
++    echo "SECURITY GATE FAILED: bypass probe compiled: $source" >&2
++    exit 1
++  fi
++  if ! grep -Eq "private access|has private access|cannot be accessed" "$log"; then
++    echo "SECURITY GATE FAILED: probe did not fail at the private boundary: $source" >&2
++    cat "$log" >&2
++    exit 1
++  fi
++}
++
++expect_access_compile_failure \
++  "$NEGATIVE_SRC/default/FactoryBypassProbe.java" \
++  "$BUILD/factory-bypass-compile.txt"
++expect_access_compile_failure \
++  "$NEGATIVE_SRC/com/bikash/fintechsettlement/ledger/domain/kernel/KernelPackageSpoofProbe.java" \
++  "$BUILD/kernel-package-spoof-compile.txt"
++expect_access_compile_failure \
++  "$NEGATIVE_SRC/com/bikash/fintechsettlement/ledger/domain/transaction/TransactionPackageSpoofProbe.java" \
++  "$BUILD/transaction-package-spoof-compile.txt"
++
++echo "NEGATIVE COMPILE SECURITY GATE PASSED: factory, capability, and transaction construction inaccessible" \
++  | tee "$BUILD/negative-compile-security.txt"
++
+ # Compile all Maven test sources against minimal API stubs. This validates test syntax and
+ # domain API usage without pretending to execute unavailable external test engines offline.
+ STUB_SRC="$BUILD/test-api-stubs-src"
